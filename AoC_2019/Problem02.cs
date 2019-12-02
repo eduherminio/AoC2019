@@ -85,11 +85,12 @@ namespace AoC_2019
             Console.Write($"Day 2, part 2: {result}");
         }
 
-        public ICollection<int> ParseInput()
+        public IEnumerable<int> ParseInput()
         {
-            ParsedFile file = new ParsedFile(FilePath);
-
-            return file.NextLine().ToSingleString().Split(',').Select(int.Parse).ToList();
+            return new ParsedFile(FilePath)
+                .ToSingleString()
+                .Split(',')
+                .Select(int.Parse);
         }
     }
 }
