@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AoCHelper" Version="0.1.0-alpha" />
+    <PackageReference Include="FileParser" Version="1.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ItemsToCopy Include="$(MSBuildThisFileDirectory)\Inputs\*.*" />
+  </ItemGroup>
+
+  <Target Name="CopyInputFilesToOutputDir" AfterTargets="Build">
+    <Copy SourceFiles="@(ItemsToCopy)" DestinationFolder="$(OutputPath)\Inputs" />
+  </Target>
+
+</Project>
