@@ -1,5 +1,4 @@
 ﻿using AoCHelper;
-using System;
 
 namespace AoC_2019
 {

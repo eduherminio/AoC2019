@@ -12,7 +12,7 @@ namespace AoC_2019
         {
             var input = ParseInput();
 
-            var result = input.Select(CalculateFuel()).Sum();
+            var result = input.Select(CalculateFuel).Sum();
 
             Console.Write($"Day 1, part 1: {result}");
         }
@@ -21,31 +21,23 @@ namespace AoC_2019
         {
             var input = ParseInput();
 
-            var initialFuel = input.Select(CalculateFuel());
-
-            var result = initialFuel.Sum();
-            for (int i = 0; i < initialFuel.Count(); ++i)
-            {
-                var fuelPerModule = initialFuel.ElementAt(i);
-                while (true)
-                {
-                    var extraFuel = CalculateFuel().Invoke(fuelPerModule);
-                    if (extraFuel <= 0)
-                    {
-                        break;
-                    }
-
-                    fuelPerModule = extraFuel;
-                    result += extraFuel;
-                }
-            }
+            var result = input.Select(CalculateFuelRecursive).Sum();
 
             Console.Write($"Day 1, part 2: {result}");
         }
 
-        private static Func<int, int> CalculateFuel()
+        private static int CalculateFuel(int mass)
         {
-            return item => (int)Math.Floor(item / 3.0) - 2;
+            return (int)Math.Floor(mass / 3.0) - 2;
+        }
+
+        private static int CalculateFuelRecursive(int mass)
+        {
+            int initialFuel = CalculateFuel(mass);
+
+            return initialFuel > 0
+                ? initialFuel + CalculateFuelRecursive(initialFuel)
+                : 0;
         }
 
         public ICollection<int> ParseInput()
