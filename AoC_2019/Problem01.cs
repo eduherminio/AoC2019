@@ -8,22 +8,22 @@ namespace AoC_2019
 {
     public class Problem01 : BaseProblem
     {
-        public override void Solve_1()
+        public override string Solve_1()
         {
             var input = ParseInput();
 
             var result = input.Select(CalculateFuel).Sum();
 
-            Console.Write($"Day 1, part 1: {result}");
+            return result.ToString();
         }
 
-        public override void Solve_2()
+        public override string Solve_2()
         {
             var input = ParseInput();
 
             var result = input.Select(CalculateFuelRecursive).Sum();
 
-            Console.Write($"Day 1, part 2: {result}");
+            return result.ToString();
         }
 
         private static int CalculateFuel(int mass)

@@ -11,16 +11,16 @@ namespace AoC_2019
     {
         private const int Part2Output = 19690720;
 
-        public override void Solve_1()
+        public override string Solve_1()
         {
             var input = ParseInput().ToList();
 
             var result = CalculateOutput(12, 2, input);
 
-            Console.Write($"Day 2, part 1: {result}");
+            return result.ToString();
         }
 
-        public override void Solve_2()
+        public override string Solve_2()
         {
             var originalInput = ParseInput();
             var nounVerb = Tuple.Create(-1, -1);
@@ -42,7 +42,7 @@ namespace AoC_2019
 
             int result = (100 * nounVerb.Item1) + nounVerb.Item2;
 
-            Console.Write($"Day 2, part 2: {result}");
+            return result.ToString();
         }
 
         private static int CalculateOutput(int noun, int verb, List<int> input)
@@ -73,7 +73,7 @@ namespace AoC_2019
                         return input;
 
                     default:
-                        throw new Exception("Something went wront");
+                        throw new SolvingException("Something went wrong");
                 }
 
                 i += 4;
