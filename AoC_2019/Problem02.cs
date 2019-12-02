@@ -66,7 +66,7 @@ namespace AoC_2019
             {
                 foreach (var two in RangeHelpers.GenerateRange(0, 99))
                 {
-                    var input = originalInput.Take(originalInput.Count).ToList();
+                    var input = originalInput.ToList();
                     input[1] = one;
                     input[2] = two;
 
