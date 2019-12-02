@@ -15,23 +15,47 @@ namespace AoC_2019
         {
             var input = ParseInput().ToList();
 
-            input[1] = 12;
-            input[2] = 2;
+            var result = CalculateOutput(12, 2, input);
 
-            //input = new[] { 1, 1, 1, 4, 99, 5, 6, 0, 99 }.ToList(); //  30,1,1,4,2,5,6,0,99
-
-            //AlterInput(ref input);
-
-            //input = new[] { 2, 4, 4, 5, 99, 0 }.ToList();   //   2,4,4,5,99,9801
-
-            //AlterInput(ref input);
-
-            AlterInput(ref input);
-
-            Console.Write($"Day 2, part 1: {input.First()}");
+            Console.Write($"Day 2, part 1: {result}");
         }
 
-        private void AlterInput(ref List<int> input)
+        public override void Solve_2()
+        {
+            var originalInput = ParseInput();
+            var nounVerb = Tuple.Create(-1, -1);
+
+            foreach (var one in RangeHelpers.GenerateRange(0, 99))
+            {
+                foreach (var two in RangeHelpers.GenerateRange(0, 99))
+                {
+                    var input = originalInput.ToList();
+                    var output = CalculateOutput(one, two, input);
+
+                    if (output == Part2Output)
+                    {
+                        nounVerb = Tuple.Create(one, two);
+                        break;
+                    }
+                }
+            }
+
+            int result = (100 * nounVerb.Item1) + nounVerb.Item2;
+
+            Console.Write($"Day 2, part 2: {result}");
+        }
+
+        private static int CalculateOutput(int noun, int verb, List<int> input)
+        {
+            input[1] = noun;
+            input[2] = verb;
+
+            var outputSequence = RunIntcodeProgram(input);
+
+            return outputSequence.First();
+        }
+
+        private static ICollection<int> RunIntcodeProgram(List<int> input)
         {
             for (int i = 0; i < input.Count;)
             {
@@ -46,43 +70,16 @@ namespace AoC_2019
                         break;
 
                     case 99:
-                        return;
+                        return input;
 
                     default:
-                        input = new List<int> { -1 };
-                        return;
+                        throw new Exception("Something went wront");
                 }
 
                 i += 4;
             }
-        }
 
-        public override void Solve_2()
-        {
-            var originalInput = ParseInput();
-            var nounVerb = Tuple.Create(-1, -1);
-
-            foreach (var one in RangeHelpers.GenerateRange(0, 99))
-            {
-                foreach (var two in RangeHelpers.GenerateRange(0, 99))
-                {
-                    var input = originalInput.ToList();
-                    input[1] = one;
-                    input[2] = two;
-
-                    AlterInput(ref input);
-
-                    if (input.First() == Part2Output)
-                    {
-                        nounVerb = Tuple.Create(one, two);
-                        break;
-                    }
-                }
-            }
-
-            int result = 100 * nounVerb.Item1 + nounVerb.Item2;
-
-            Console.Write($"Day 2, part 2: {result}");
+            return input;
         }
 
         public IEnumerable<int> ParseInput()
