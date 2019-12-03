@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AoCHelper" Version="0.2.0" />
+    <PackageReference Include="AoCHelper" Version="0.2.2" />
     <PackageReference Include="FileParser" Version="1.3.0" />
   </ItemGroup>
 
