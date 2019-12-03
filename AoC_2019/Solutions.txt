@@ -1,8 +1,8 @@
-Day 1, part 1:          3342946                         138 ms
+Day 1, part 1:          3342946                         46 ms
 Day 1, part 2:          5011553                         0 ms
 
 Day 2, part 1:          5290681                         10 ms
-Day 2, part 2:          5741                            132 ms
+Day 2, part 2:          5741                            75 ms
 
-Day 3, part 1:          227                             465 ms
-Day 3, part 2:          20286                           343 ms
+Day 3, part 1:          227                             340 ms
+Day 3, part 2:          20286                           224 ms

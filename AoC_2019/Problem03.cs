@@ -7,7 +7,6 @@ using System.Linq;
 using AoCHelper.Helpers;
 
 namespace AoC_2019
-
 {
     public class Problem03 : BaseProblem
     {
