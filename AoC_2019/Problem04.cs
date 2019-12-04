@@ -23,7 +23,7 @@ namespace AoC_2019
                 .Where(candidate =>
                 {
                     bool hasDuplicatedDigits = false;
-                    for (int index = 1; index < candidate.Count(); ++index)
+                    for (int index = 1; index < candidate.Count; ++index)
                     {
                         var left = candidate.ElementAt(index - 1);
                         var right = candidate.ElementAt(index);
@@ -46,9 +46,44 @@ namespace AoC_2019
 
         public override string Solve_2()
         {
-            var input = ParseInput();
+            var input = ParseInput().ToList();
 
-            return "";
+            IEnumerable<List<int>> candidates = RangeHelpers.GenerateRange(input.First(), input.Last())
+                .Select(n => n.ToString()
+                    .ToArray()
+                    .Select(c => int.Parse(c.ToString())).ToList())
+                .ToList();
+
+            var validCandidates = candidates
+                .Where(candidate =>
+                {
+                    List<int> weightedCandidated = new List<int>(candidate.Count) { 1 };
+
+                    for (int index = 1; index < candidate.Count; ++index)
+                    {
+                        var left = candidate.ElementAt(index - 1);
+                        var right = candidate.ElementAt(index);
+
+                        if (left <= right)
+                        {
+                            if (left == right)
+                            {
+                                weightedCandidated[weightedCandidated.Count - 1]++;
+                            }
+                            else
+                            {
+                                weightedCandidated.Add(1);
+                            }
+                            continue;
+                        }
+
+                        return false;
+                    }
+
+                    return weightedCandidated.Any(n => n == 2);
+                });
+
+            return validCandidates.Count().ToString();
         }
 
         public IEnumerable<int> ParseInput()
