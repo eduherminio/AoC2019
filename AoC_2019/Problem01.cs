@@ -40,7 +40,7 @@ namespace AoC_2019
                 : 0;
         }
 
-        public ICollection<int> ParseInput()
+        private ICollection<int> ParseInput()
         {
             ParsedFile file = new ParsedFile(FilePath);
 

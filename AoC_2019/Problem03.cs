@@ -152,7 +152,7 @@ namespace AoC_2019
             return closestPoint.Value.ToString();
         }
 
-        public IEnumerable<IEnumerable<string>> ParseInput()
+        private IEnumerable<IEnumerable<string>> ParseInput()
         {
             var input = new List<List<string>>();
             var file = new ParsedFile(FilePath);

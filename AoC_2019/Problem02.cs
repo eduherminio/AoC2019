@@ -82,7 +82,7 @@ namespace AoC_2019
             return input;
         }
 
-        public IEnumerable<int> ParseInput()
+        private IEnumerable<int> ParseInput()
         {
             return new ParsedFile(FilePath)
                 .ToSingleString()

@@ -11,10 +11,7 @@ namespace AoC_2019
         public override string Solve_1()
         {
             var input = ParseInput().ToList();
-
-            IEnumerable<List<int>> candidates = RangeHelpers.GenerateRange(input.First(), input.Last())
-                .Select(n => n.ToString()
-                    .Select(c => int.Parse(c.ToString())).ToList());
+            IEnumerable<List<int>> candidates = ExtractCandidates(input);
 
             var validCandidates = candidates
                 .Where(candidate =>
@@ -44,9 +41,7 @@ namespace AoC_2019
         {
             var input = ParseInput().ToList();
 
-            IEnumerable<List<int>> candidates = RangeHelpers.GenerateRange(input.First(), input.Last())
-                .Select(n => n.ToString()
-                    .Select(c => int.Parse(c.ToString())).ToList());
+            IEnumerable<List<int>> candidates = ExtractCandidates(input);
 
             var validCandidates = candidates
                 .Where(candidate =>
@@ -82,9 +77,7 @@ namespace AoC_2019
         {
             var input = ParseInput().ToList();
 
-            IEnumerable<List<int>> candidates = RangeHelpers.GenerateRange(input.First(), input.Last())
-                .Select(n => n.ToString()
-                    .Select(c => int.Parse(c.ToString())).ToList());
+            IEnumerable<List<int>> candidates = ExtractCandidates(input);
 
             var validCandidates = candidates
                 .Where(candidate =>
@@ -116,7 +109,14 @@ namespace AoC_2019
             return validCandidates.Count().ToString();
         }
 
-        public IEnumerable<int> ParseInput()
+        private static IEnumerable<List<int>> ExtractCandidates(List<int> input)
+        {
+            return RangeHelpers.GenerateRange(input.First(), input.Last())
+                .Select(n => n.ToString()
+                    .Select(c => int.Parse(c.ToString())).ToList());
+        }
+
+        private IEnumerable<int> ParseInput()
         {
             return new ParsedFile(FilePath)
                 .ToSingleString()
