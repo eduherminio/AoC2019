@@ -46,7 +46,7 @@ namespace AoC_2019
             var validCandidates = candidates
                 .Where(candidate =>
                 {
-                    List<int> weightedCandidated = new List<int>(candidate.Count) { 1 };
+                    List<int> weightedCandidate = new List<int>(candidate.Count) { 1 };
 
                     for (int index = 1; index < candidate.Count; ++index)
                     {
@@ -55,11 +55,11 @@ namespace AoC_2019
 
                         if (left < right)
                         {
-                            weightedCandidated.Add(1);
+                            weightedCandidate.Add(1);
                         }
                         else if (left == right)
                         {
-                            ++weightedCandidated[weightedCandidated.Count - 1];
+                            ++weightedCandidate[weightedCandidate.Count - 1];
                         }
                         else
                         {
@@ -67,7 +67,7 @@ namespace AoC_2019
                         }
                     }
 
-                    return weightedCandidated.Any(n => n == 2);
+                    return weightedCandidate.Any(n => n == 2);
                 });
 
             return validCandidates.Count().ToString();
@@ -82,7 +82,7 @@ namespace AoC_2019
             var validCandidates = candidates
                 .Where(candidate =>
                 {
-                    List<int> weightedCandidated = new List<int>(candidate.Count) { 1 };
+                    List<int> weightedCandidate = new List<int>(candidate.Count) { 1 };
 
                     for (int index = 1; index < candidate.Count; ++index)
                     {
@@ -91,11 +91,11 @@ namespace AoC_2019
 
                         if (left < right)
                         {
-                            weightedCandidated.Add(1);
+                            weightedCandidate.Add(1);
                         }
                         else if (left == right)
                         {
-                            ++weightedCandidated[weightedCandidated.Count - 1];
+                            ++weightedCandidate[weightedCandidate.Count - 1];
                         }
                         else
                         {
@@ -103,7 +103,7 @@ namespace AoC_2019
                         }
                     }
 
-                    return weightedCandidated.Any(n => n >= 2);
+                    return weightedCandidate.Any(n => n >= 2);
                 });
 
             return validCandidates.Count().ToString();

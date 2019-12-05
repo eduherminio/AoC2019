@@ -4,7 +4,6 @@ using FileParser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace AoC_2019
 {
@@ -12,57 +11,112 @@ namespace AoC_2019
     {
         public override string Solve_1()
         {
-            var input = ParseInput().ToList();
+            var intCode = ParseInput().ToList();
 
-            var result = CalculateOutput(12, 2, input);
+            var outputSequence = RunIntcodeProgram(intCode, input: 1).ToList();
 
-            return result.ToString();
+            return string.Join(string.Empty, outputSequence.SkipWhile(n => n == 0));
         }
 
         public override string Solve_2()
         {
-            var originalInput = ParseInput();
+            var input = ParseInput();
 
             var result = string.Empty;
 
             return result.ToString();
         }
 
-        private static int CalculateOutput(int noun, int verb, List<int> input)
+        private static IEnumerable<int> RunIntcodeProgram(List<int> intCode, int input)
         {
-            input[1] = noun;
-            input[2] = verb;
-
-            var outputSequence = RunIntcodeProgram(input);
-
-            return outputSequence.First();
-        }
-
-        private static ICollection<int> RunIntcodeProgram(List<int> input)
-        {
-            for (int i = 0; i < input.Count;)
+            for (int i = 0; i < intCode.Count;)
             {
-                switch (input[i])
+                int output = ExecuteInstruction(ref intCode, ref i, input);
+
+                if (output >= 0)
                 {
-                    case 1:
-                        input[input[i + 3]] = input[input[i + 1]] + input[input[i + 2]];
-                        break;
-
-                    case 2:
-                        input[input[i + 3]] = input[input[i + 1]] * input[input[i + 2]];
-                        break;
-
-                    case 99:
-                        return input;
-
-                    default:
-                        throw new SolvingException("Something went wrong");
+                    yield return output;
                 }
 
-                i += 4;
+                if (i == -1)
+                {
+                    break;
+                }
+            }
+        }
+
+        private enum ParameterMode
+        {
+            Position = 0,
+            Immediate = 1
+        }
+
+        private static int ExecuteInstruction(ref List<int> intCode, ref int instructionPointer, int input)
+        {
+            List<ParameterMode> parameterModeList = new List<ParameterMode>();
+            int opcode = intCode[instructionPointer];
+            int opcodeLength = opcode.ToString().Length;
+
+            if (opcodeLength != 1)
+            {
+                IEnumerable<int> parameterModes = opcode.ToString().Reverse().Select(c => int.Parse(c.ToString()));
+                parameterModeList = parameterModes.Skip(2).Select(n => (ParameterMode)n).ToList();
+
+                opcode = int.Parse(opcode.ToString().Substring(opcodeLength - 2));
             }
 
-            return input;
+            switch (opcode)
+            {
+                case 0:
+                    ++instructionPointer;
+                    break;
+                case 1:
+                    intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 3)] =
+                        intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 1)]
+                        + intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 2)];
+                    instructionPointer += 4;
+                    break;
+
+                case 2:
+                    intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 3)] =
+                        intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 1)]
+                        * intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 2)];
+                    instructionPointer += 4;
+                    break;
+
+                case 3:
+                    intCode[intCode[instructionPointer + 1]] = input;
+                    instructionPointer += 2;
+                    break;
+
+                case 4:
+                    int output = intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 1)];
+                    instructionPointer += 2;
+                    return output;
+
+                case 99:
+                    instructionPointer = -1;
+                    return -1;
+
+                default:
+                    throw new SolvingException("Something went wrong");
+            }
+
+            return -2;
+        }
+
+        private static int ExtractParameter(List<int> input, IEnumerable<ParameterMode> parameterModes, int instructionPointer, int offset)
+        {
+            ParameterMode parameterMode = offset <= parameterModes.Count()
+                ? parameterModes.ElementAt(offset - 1)
+                : default;
+
+            return parameterMode switch
+            {
+                ParameterMode.Position => input[instructionPointer + offset],
+                ParameterMode.Immediate => instructionPointer + offset,
+                _ => throw new SolvingException($"Unknown ParameterMode: {parameterMode}")
+            };
         }
 
         private IEnumerable<int> ParseInput()
