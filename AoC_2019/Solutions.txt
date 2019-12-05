@@ -9,3 +9,6 @@ Day 3, part 2:          20286                           224 ms
 
 Day 4, part 1:          945                             738 ms
 Day 4, part 2:          617                             653 ms
+
+Day 5, part 1:          7259358                         30 ms
+Day 5, part 2:          11826654                        1 ms
