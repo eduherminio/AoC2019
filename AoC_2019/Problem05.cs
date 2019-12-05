@@ -1,5 +1,4 @@
 ﻿using AoCHelper;
-using AoCHelper.Helpers;
 using FileParser;
 using System;
 using System.Collections.Generic;
@@ -9,17 +8,11 @@ namespace AoC_2019
 {
     public class Problem05 : BaseProblem
     {
-        private enum ParameterMode
-        {
-            Position = 0,
-            Immediate = 1
-        }
-
         public override string Solve_1()
         {
             var intCode = ParseInput().ToList();
 
-            var outputSequence = RunIntcodeProgram(intCode, input: 1).ToList();
+            var outputSequence = IntCodeComputer.RunIntcodeProgram(intCode, input: 1).ToList();
 
             return string.Join(string.Empty, outputSequence.SkipWhile(n => n == 0));
         }
@@ -28,25 +21,56 @@ namespace AoC_2019
         {
             var intCode = ParseInput().ToList();
 
-            var outputSequence = RunIntcodeProgram(intCode, input: 5).ToList();
+            var outputSequence = IntCodeComputer.RunIntcodeProgram(intCode, input: 5).ToList();
 
             return string.Join(string.Empty, outputSequence.SkipWhile(n => n == 0));
         }
 
-        private static IEnumerable<int> RunIntcodeProgram(List<int> intCode, int input)
+        private IEnumerable<int> ParseInput()
         {
-            for (int i = 0; i < intCode.Count;)
+            return new ParsedFile(FilePath)
+                .ToSingleString()
+                .Split(',')
+                .Select(int.Parse);
+        }
+    }
+
+    public static class IntCodeComputer
+    {
+        private static readonly Dictionary<int, Func<int, IInstruction>> _supportedInstructions = new Dictionary<int, Func<int, IInstruction>>
+        {
+            [0] = (_) => new Instruction0(),
+            [1] = (_) => new Instruction1(),
+            [2] = (_) => new Instruction2(),
+            [3] = (input) => new Instruction3(input),
+            [4] = (_) => new Instruction4(),
+            [5] = (_) => new Instruction5(),
+            [6] = (_) => new Instruction6(),
+            [7] = (_) => new Instruction7(),
+            [8] = (_) => new Instruction8(),
+            [99] = (_) => new Instruction99()
+        };
+
+        private enum ParameterMode
+        {
+            Position = 0,
+            Immediate = 1
+        }
+
+        public static IEnumerable<int> RunIntcodeProgram(List<int> intCode, int input)
+        {
+            for (int instructionPointer = 0; instructionPointer < intCode.Count;)
             {
-                int output = ExecuteInstruction(ref intCode, ref i, input);
+                int output = ExecuteInstruction(ref intCode, ref instructionPointer, input);
 
-                if (output >= 0)
-                {
-                    yield return output;
-                }
-
-                if (i == -1)
+                if (instructionPointer == BaseInstruction.InstructionPointerValueWhenHalt)
                 {
                     break;
+                }
+
+                if (output != BaseInstruction.NullCode)
+                {
+                    yield return output;
                 }
             }
         }
@@ -65,90 +89,11 @@ namespace AoC_2019
                 opcode = int.Parse(opcode.ToString().Substring(opcodeLength - 2));
             }
 
-            switch (opcode)
-            {
-                case 0:
-                    ++instructionPointer;
-                    break;
-                case 1:
-                    intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 3)] =
-                        intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 1)]
-                        + intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 2)];
-                    instructionPointer += 4;
-                    break;
-
-                case 2:
-                    intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 3)] =
-                        intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 1)]
-                        * intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 2)];
-                    instructionPointer += 4;
-                    break;
-
-                case 3:
-                    intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 1)] = input;
-                    instructionPointer += 2;
-                    break;
-
-                case 4:
-                    int output = intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 1)];
-                    instructionPointer += 2;
-                    return output;
-
-                case 5:
-                    {
-                        int param1 = intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 1)];
-                        instructionPointer = param1 != 0
-                            ? intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 2)]
-                            : instructionPointer + 3;
-                        break;
-                    }
-
-                case 6:
-                    {
-                        int param1 = intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 1)];
-                        instructionPointer = param1 == 0
-                            ? intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 2)]
-                            : instructionPointer + 3;
-                        break;
-                    }
-
-                case 7:
-                    {
-                        int param1 = intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 1)];
-                        int param2 = intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 2)];
-
-                        intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 3)] = param1 < param2
-                            ? 1
-                            : 0;
-
-                        instructionPointer += 4;
-                        break;
-                    }
-
-                case 8:
-                    {
-                        int param1 = intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 1)];
-                        int param2 = intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 2)];
-
-                        intCode[ExtractParameter(intCode, parameterModeList, instructionPointer, 3)] = param1 == param2
-                            ? 1
-                            : 0;
-
-                        instructionPointer += 4;
-                        break;
-                    }
-                case 99:
-                    instructionPointer = -1;
-                    return -1;
-
-                default:
-                    throw new SolvingException("Something went wrong");
-            }
-
-            return -2;
+            return GetInstruction(opcode, input)
+                .Run(parameterModeList, ref intCode, ref instructionPointer);
         }
 
-        private static int ExtractParameter(List<int> input, IEnumerable<ParameterMode> parameterModes, int instructionPointer, int offset)
+        private static int ExtractParameterValue(List<int> input, IEnumerable<ParameterMode> parameterModes, int instructionPointer, int offset)
         {
             ParameterMode parameterMode = offset <= parameterModes.Count()
                 ? parameterModes.ElementAt(offset - 1)
@@ -162,12 +107,172 @@ namespace AoC_2019
             };
         }
 
-        private IEnumerable<int> ParseInput()
+        private static IInstruction GetInstruction(int instructionCode, int input)
         {
-            return new ParsedFile(FilePath)
-                .ToSingleString()
-                .Split(',')
-                .Select(int.Parse);
+            if (_supportedInstructions.TryGetValue(instructionCode, out var instruction))
+            {
+                return instruction.Invoke(input);
+            }
+
+            throw new ArgumentException($"Instruction {instructionCode} not supported");
         }
+
+        private interface IInstruction
+        {
+            int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer);
+        }
+
+        #region Instructions
+
+        private abstract class BaseInstruction : IInstruction
+        {
+            public const int NullCode = int.MinValue;
+            public const int InstructionPointerValueWhenHalt = -1;
+
+            public abstract int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer);
+
+            protected int Nothing() => NullCode;
+        }
+
+        private class Instruction0 : BaseInstruction
+        {
+            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            {
+                ++instructionPointer;
+                return Nothing();
+            }
+        }
+
+        private class Instruction1 : BaseInstruction
+        {
+            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            {
+                intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 3)] =
+                    intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)]
+                    + intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 2)];
+
+                instructionPointer += 4;
+
+                return Nothing();
+            }
+        }
+
+        private class Instruction2 : BaseInstruction
+        {
+            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            {
+                intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 3)] =
+                    intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)]
+                    * intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 2)];
+
+                instructionPointer += 4;
+
+                return Nothing();
+            }
+        }
+
+        private class Instruction3 : BaseInstruction
+        {
+            private readonly int _input;
+
+            public Instruction3(int input)
+            {
+                _input = input;
+            }
+
+            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            {
+                intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)] = _input;
+
+                instructionPointer += 2;
+
+                return Nothing();
+            }
+        }
+
+        private class Instruction4 : BaseInstruction
+        {
+            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            {
+                int output = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)];
+                instructionPointer += 2;
+
+                return output;
+            }
+        }
+
+        private class Instruction5 : BaseInstruction
+        {
+            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            {
+                int param1 = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)];
+
+                instructionPointer = param1 != 0
+                    ? intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 2)]
+                    : instructionPointer + 3;
+
+                return Nothing();
+            }
+        }
+
+        private class Instruction6 : BaseInstruction
+        {
+            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            {
+                int param1 = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)];
+
+                instructionPointer = param1 == 0
+                    ? intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 2)]
+                    : instructionPointer + 3;
+
+                return Nothing();
+            }
+        }
+
+        private class Instruction7 : BaseInstruction
+        {
+            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            {
+                int param1 = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)];
+                int param2 = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 2)];
+
+                intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 3)] = param1 < param2
+                    ? 1
+                    : 0;
+
+                instructionPointer += 4;
+
+                return Nothing();
+            }
+        }
+
+        private class Instruction8 : BaseInstruction
+        {
+            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            {
+                int param1 = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)];
+                int param2 = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 2)];
+
+                intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 3)] = param1 == param2
+                    ? 1
+                    : 0;
+
+                instructionPointer += 4;
+
+                return Nothing();
+            }
+        }
+
+        private class Instruction99 : BaseInstruction
+        {
+            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            {
+                instructionPointer = InstructionPointerValueWhenHalt;
+
+                return Nothing();
+            }
+        }
+
+        #endregion
     }
 }
