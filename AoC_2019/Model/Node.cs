@@ -29,5 +29,24 @@ namespace AoC_2019.Model
                    + Children.Select(child => child.GrandChildrenCount()).Sum()
                    + Children.Select(child => child.RelationshipCount()).Sum();
         }
+
+        public int DistanceTo(Node node, int initialDistance)
+        {
+            if (Children.Contains(node))
+            {
+                return ++initialDistance;
+            }
+            else
+            {
+                int existingDistance = Children.Any()
+                    ? Children.Select(child =>
+                        child.DistanceTo(node, initialDistance)).Min()
+                    : int.MaxValue;
+
+                return existingDistance == int.MaxValue
+                    ? existingDistance
+                    : ++existingDistance;
+            }
+        }
     }
 }

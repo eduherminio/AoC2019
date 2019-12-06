@@ -21,9 +21,48 @@ namespace AoC_2019
 
         public override string Solve_2()
         {
-            var input = ParseInput().ToList();
+            var nodes = ParseInput().ToList();
 
-            return "";
+            const string me = "YOU";
+            const string santa = "SAN";
+
+            Node myLocation = nodes.Single(node => node.Id == me);
+            Node santaLocation = nodes.Single(node => node.Id == santa);
+
+            Node commonPointBetweenMeAndSanta = GetCommonPoint(nodes, myLocation, santaLocation);
+
+            int distanceToMe = commonPointBetweenMeAndSanta.DistanceTo(myLocation, 0);
+            int distanceToSanta = commonPointBetweenMeAndSanta.DistanceTo(santaLocation, 0);
+
+            int result = distanceToMe + distanceToSanta - 2;
+
+            return result.ToString();
+        }
+
+        private Node GetCommonPoint(List<Node> nodes, Node myLocation, Node santaLocation)
+        {
+            HashSet<string> identifiers = new HashSet<string>();
+
+            Node transverseBackwards(List<Node> nodes, ref HashSet<string> identifiers, Node currentNode)
+            {
+                while (currentNode.ParentId != default)
+                {
+                    if (!identifiers.Add(currentNode.Id))
+                    {
+                        break;
+                    }
+
+                    currentNode = nodes.Single(node => node.Id == currentNode.ParentId);
+                }
+
+                return currentNode;
+            }
+
+            transverseBackwards(nodes, ref identifiers, myLocation);
+
+            Node ancestor = transverseBackwards(nodes, ref identifiers, santaLocation);
+
+            return ancestor;
         }
 
         private HashSet<Node> ParseInput()
