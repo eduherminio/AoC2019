@@ -29,17 +29,17 @@ namespace AoC_2019
             Node myLocation = nodes.Single(node => node.Id == me);
             Node santaLocation = nodes.Single(node => node.Id == santa);
 
-            Node commonPointBetweenMeAndSanta = GetCommonPoint(nodes, myLocation, santaLocation);
+            Node commonAncestorBetweenMeAndSanta = GetCommonAncestor(nodes, myLocation, santaLocation);
 
-            int distanceToMe = commonPointBetweenMeAndSanta.DistanceTo(myLocation, 0);
-            int distanceToSanta = commonPointBetweenMeAndSanta.DistanceTo(santaLocation, 0);
+            int distanceToMe = commonAncestorBetweenMeAndSanta.DistanceTo(myLocation, 0);
+            int distanceToSanta = commonAncestorBetweenMeAndSanta.DistanceTo(santaLocation, 0);
 
             int result = distanceToMe + distanceToSanta - 2;
 
             return result.ToString();
         }
 
-        private Node GetCommonPoint(List<Node> nodes, Node myLocation, Node santaLocation)
+        private Node GetCommonAncestor(List<Node> nodes, Node myLocation, Node santaLocation)
         {
             HashSet<string> identifiers = new HashSet<string>();
 
@@ -60,9 +60,9 @@ namespace AoC_2019
 
             transverseBackwards(nodes, ref identifiers, myLocation);
 
-            Node ancestor = transverseBackwards(nodes, ref identifiers, santaLocation);
+            Node commonAncestor = transverseBackwards(nodes, ref identifiers, santaLocation);
 
-            return ancestor;
+            return commonAncestor;
         }
 
         private HashSet<Node> ParseInput()
