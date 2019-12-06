@@ -19,14 +19,15 @@ namespace AoC_2019.Model
 
         public int GrandChildrenCount()
         {
-            return Children.Count + Children.Select(child => child.GrandChildrenCount()).Sum();
+            return Children.Count
+                + Children.Select(child => child.GrandChildrenCount()).Sum();
         }
 
-        public int RelationShipCount()
+        public int RelationshipCount()
         {
             return Children.Count
                    + Children.Select(child => child.GrandChildrenCount()).Sum()
-                   + Children.Select(child => child.RelationShipCount()).Sum();
+                   + Children.Select(child => child.RelationshipCount()).Sum();
         }
     }
 }

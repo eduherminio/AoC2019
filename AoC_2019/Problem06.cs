@@ -12,9 +12,9 @@ namespace AoC_2019
         {
             var nodes = ParseInput();
 
-            var parent = nodes.Single(n => !nodes.Any(otherN => otherN.Children.Contains(n)));
+            var parent = nodes.Single(n => n.ParentId == default);
 
-            var result = parent.RelationShipCount();
+            var result = parent.RelationshipCount();
 
             return result.ToString();
         }
@@ -29,37 +29,54 @@ namespace AoC_2019
         private HashSet<Node> ParseInput()
         {
             HashSet<Node> nodes = new HashSet<Node>();
-            HashSet<string> existingNodes = new HashSet<string>();
 
             var inputs = new ParsedFile(FilePath).ToList<string>();
 
             inputs.ForEach(str =>
             {
                 IEnumerable<string> items = str.Split(')');
+                string centerId = items.First();
+                string orbiterId = items.Last();
 
-                if (existingNodes.Add(items.Last()))
+                Node existingOrbiter = AddOrUpdateOrbiter(nodes, centerId, orbiterId);
+                AddOrUpdateCenter(nodes, centerId, existingOrbiter);
+            });
+
+            return nodes;
+        }
+
+        private static void AddOrUpdateCenter(HashSet<Node> nodes, string centerId, Node existingOrbiter)
+        {
+            if (nodes.TryGetValue(new Node(centerId), out Node existingCenter))
+            {
+                existingCenter.Children.Add(existingOrbiter);
+            }
+            else
+            {
+                nodes.Add(new Node(centerId, existingOrbiter));
+            }
+        }
+
+        private static Node AddOrUpdateOrbiter(HashSet<Node> nodes, string centerId, string orbiterId)
+        {
+            if (nodes.TryGetValue(new Node(orbiterId), out Node existingOrbiter))
+            {
+                if (existingOrbiter.ParentId == default)
                 {
-                    nodes.Add(new Node(items.Last()));
-                }
-
-                var orbiter = nodes.Single(n => n.Id == items.Last());
-
-                if (existingNodes.Add(items.First()))
-                {
-                    nodes.Add(new Node(items.First(), orbiter));
+                    existingOrbiter.ParentId = centerId;
                 }
                 else
                 {
-                    nodes.Single(n => n.Id == items.First()).Children.Add(orbiter);
+                    throw new SolvingException("Input doesn't look like a tree!!");
                 }
-            });
-
-            if (existingNodes.Count != nodes.Count)
+            }
+            else
             {
-                throw new SolvingException("Error parsing input");
+                existingOrbiter = new Node(orbiterId) { ParentId = centerId };
+                nodes.Add(existingOrbiter);
             }
 
-            return nodes;
+            return existingOrbiter;
         }
     }
 }
