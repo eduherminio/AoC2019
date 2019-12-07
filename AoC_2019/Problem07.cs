@@ -1,9 +1,10 @@
-﻿using AoCHelper;
+using AoCHelper;
 using FileParser;
 using System.Collections.Generic;
 using System.Linq;
-using AoCHelper.Helpers;
 using System;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 
 namespace AoC_2019
 {
@@ -11,7 +12,7 @@ namespace AoC_2019
     {
         public override string Solve_1()
         {
-            var input = ParseInput().ToList();
+            var intCode = ParseInput().ToList();
 
             List<int> phaseList = new List<int> { 0, 1, 2, 3, 4 };
             int ampNumber = phaseList.Count;
@@ -26,8 +27,7 @@ namespace AoC_2019
                 var previousOutput = 0;
                 for (int ampIndex = 0; ampIndex < ampNumber; ++ampIndex)
                 {
-                    var outputList = IntCodeComputer.RunIntcodeProgram(
-                        input, new[] { int.Parse(permutation[ampIndex].ToString()), previousOutput });
+                    var outputList = RunIntCodeProgram(intCode, input: new[] { int.Parse(permutation[ampIndex].ToString()), previousOutput }).Result;
 
                     previousOutput = outputList.Single();
                 }
@@ -78,6 +78,25 @@ namespace AoC_2019
             return n > 0
                 ? n * Factorial(n - 1)
                 : 1;
+        }
+
+        private static async Task<ICollection<int>> RunIntCodeProgram(List<int> intCode, IEnumerable<int> input)
+        {
+            Channel<int> channel = Channel.CreateUnbounded<int>();
+            IntCodeComputer computer = new IntCodeComputer(channel);
+
+            foreach (int n in input)
+            {
+                await channel.Writer.WriteAsync(n).ConfigureAwait(false);
+            }
+
+            ICollection<int> result = new List<int>();
+            await foreach (var item in computer.RunIntCodeProgram(intCode))
+            {
+                result.Add(item);
+            }
+
+            return result;
         }
 
         private IEnumerable<int> ParseInput()

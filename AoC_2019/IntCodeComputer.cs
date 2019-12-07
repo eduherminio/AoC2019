@@ -2,29 +2,29 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 
 namespace AoC_2019
 {
-    public static class IntCodeComputer
+    public class IntCodeComputer
     {
-        private static readonly Dictionary<int, Func<ICollection<int>, Tuple<IInstruction, ICollection<int>>>> _supportedInstructions =
-            new Dictionary<int, Func<ICollection<int>, Tuple<IInstruction, ICollection<int>>>>
+        private readonly Dictionary<int, Func<ChannelReader<int>, IInstruction>> _supportedInstructions =
+            new Dictionary<int, Func<ChannelReader<int>, IInstruction>>
             {
-                [0] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction0(), input),
-                [1] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction1(), input),
-                [2] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction2(), input),
-                [3] = (input) =>
-                {
-                    var result = new Instruction3(input);
-                    return Tuple.Create<IInstruction, ICollection<int>>(result, input.Skip(1).ToList());
-                },
-                [4] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction4(), input),
-                [5] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction5(), input),
-                [6] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction6(), input),
-                [7] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction7(), input),
-                [8] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction8(), input),
-                [99] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction99(), input)
+                [0] = (_) => new Instruction0(),
+                [1] = (_) => new Instruction1(),
+                [2] = (_) => new Instruction2(),
+                [3] = (inputReader) => new Instruction3(inputReader),
+                [4] = (_) => new Instruction4(),
+                [5] = (_) => new Instruction5(),
+                [6] = (_) => new Instruction6(),
+                [7] = (_) => new Instruction7(),
+                [8] = (_) => new Instruction8(),
+                [99] = (_) => new Instruction99()
             };
+
+        private readonly ChannelReader<int> _inputReader;
 
         private enum ParameterMode
         {
@@ -32,32 +32,45 @@ namespace AoC_2019
             Immediate = 1
         }
 
-        public static IEnumerable<int> RunIntcodeProgram(List<int> intCode, ICollection<int> input)
+        /// <summary>
+        /// Use only if no input instructions are expected
+        /// </summary>
+        public IntCodeComputer() { }
+
+        public IntCodeComputer(ChannelReader<int> inputReader)
+        {
+            _inputReader = inputReader;
+        }
+
+        public async IAsyncEnumerable<int> RunIntCodeProgram(List<int> intCode)
         {
             for (int instructionPointer = 0; instructionPointer < intCode.Count;)
             {
-                int output = ExecuteInstruction(ref intCode, ref instructionPointer, ref input);
+                var output = await ExecuteInstruction(intCode, instructionPointer).ConfigureAwait(false);
+
+                int outputCode = output.Item1;
+                instructionPointer = output.Item2;
 
                 if (instructionPointer == BaseInstruction.InstructionPointerValueWhenHalt)
                 {
                     break;
                 }
 
-                if (output != BaseInstruction.NullCode)
+                if (outputCode != BaseInstruction.NullCode)
                 {
-                    yield return output;
+                    yield return outputCode;
                 }
             }
         }
 
-        private static int ExecuteInstruction(ref List<int> intCode, ref int instructionPointer, ref ICollection<int> input)
+        private async Task<Tuple<int, int>> ExecuteInstruction(List<int> intCode, int instructionPointer)
         {
             int opcode = intCode[instructionPointer];
 
             List<ParameterMode> parameterModeList = CalculateParametersMode(ref opcode);
 
-            return GetInstruction(opcode, ref input)
-                .Run(parameterModeList, ref intCode, ref instructionPointer);
+            return await GetInstruction(opcode)
+                .Run(parameterModeList, intCode, instructionPointer).ConfigureAwait(false);
         }
 
         private static List<ParameterMode> CalculateParametersMode(ref int opcode)
@@ -90,14 +103,11 @@ namespace AoC_2019
             };
         }
 
-        private static IInstruction GetInstruction(int instructionCode, ref ICollection<int> input)
+        private IInstruction GetInstruction(int instructionCode)
         {
-            if (_supportedInstructions.TryGetValue(instructionCode, out var tupleFunc))
+            if (_supportedInstructions.TryGetValue(instructionCode, out var instruction))
             {
-                var tuple = tupleFunc.Invoke(input);
-                input = tuple.Item2;
-
-                return tuple.Item1;
+                return instruction.Invoke(_inputReader);
             }
 
             throw new ArgumentException($"Instruction {instructionCode} not supported");
@@ -105,7 +115,9 @@ namespace AoC_2019
 
         private interface IInstruction
         {
-            int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer);
+            int Length { get; }
+
+            Task<Tuple<int, int>> Run(IEnumerable<ParameterMode> parameterModeList, List<int> intCode, int instructionPointer);
         }
 
         #region Instructions
@@ -115,115 +127,122 @@ namespace AoC_2019
             public const int NullCode = int.MinValue;
             public const int InstructionPointerValueWhenHalt = -1;
 
-            public abstract int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer);
+            public abstract int Length { get; }
 
-            protected int Nothing() => NullCode;
+            public abstract Task<Tuple<int, int>> Run(IEnumerable<ParameterMode> parameterModeList, List<int> intCode, int instructionPointer);
+
+            protected Task<Tuple<int, int>> Nothing(int instructionPointerIncrease) => Task.FromResult(Tuple.Create(NullCode, instructionPointerIncrease));
         }
 
         private class Instruction0 : BaseInstruction
         {
-            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            public override int Length => 1;
+
+            public override Task<Tuple<int, int>> Run(IEnumerable<ParameterMode> parameterModeList, List<int> intCode, int instructionPointer)
             {
-                ++instructionPointer;
-                return Nothing();
+                return Nothing(instructionPointer + Length);
             }
         }
 
         private class Instruction1 : BaseInstruction
         {
-            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            public override int Length => 4;
+
+            public override Task<Tuple<int, int>> Run(IEnumerable<ParameterMode> parameterModeList, List<int> intCode, int instructionPointer)
             {
                 intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 3)] =
                     intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)]
                     + intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 2)];
 
-                instructionPointer += 4;
-
-                return Nothing();
+                return Nothing(instructionPointer + Length);
             }
         }
 
         private class Instruction2 : BaseInstruction
         {
-            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            public override int Length => 4;
+
+            public override Task<Tuple<int, int>> Run(IEnumerable<ParameterMode> parameterModeList, List<int> intCode, int instructionPointer)
             {
                 intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 3)] =
                     intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)]
                     * intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 2)];
 
-                instructionPointer += 4;
-
-                return Nothing();
+                return Nothing(instructionPointer + Length);
             }
         }
 
         private class Instruction3 : BaseInstruction
         {
-            private readonly IEnumerable<int> _input;
+            private readonly ChannelReader<int> _inputReader;
 
-            public Instruction3(IEnumerable<int> input)
+            public override int Length => 2;
+
+            public Instruction3(ChannelReader<int> inputReader)
             {
-                _input = input;
+                _inputReader = inputReader;
             }
 
-            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            public override async Task<Tuple<int, int>> Run(IEnumerable<ParameterMode> parameterModeList, List<int> intCode, int instructionPointer)
             {
-                if (!_input.Any())
-                {
-                    throw new SolvingException("IntCode computer has run out of inputs!");
-                }
-                var nextInput = _input.First();
+                await _inputReader.WaitToReadAsync().ConfigureAwait(false);
+                _inputReader.TryRead(out int input);
 
-                intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)] = nextInput;
+                intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)] = input;
 
-                instructionPointer += 2;
-
-                return Nothing();
+                return await Nothing(instructionPointer + Length).ConfigureAwait(false);
             }
         }
 
         private class Instruction4 : BaseInstruction
         {
-            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            public override int Length => 2;
+
+            public override Task<Tuple<int, int>> Run(IEnumerable<ParameterMode> parameterModeList, List<int> intCode, int instructionPointer)
             {
                 int output = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)];
-                instructionPointer += 2;
 
-                return output;
+                return Task.FromResult(Tuple.Create(output, instructionPointer + Length));
             }
         }
 
         private class Instruction5 : BaseInstruction
         {
-            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            public override int Length => 3;
+
+            public override Task<Tuple<int, int>> Run(IEnumerable<ParameterMode> parameterModeList, List<int> intCode, int instructionPointer)
             {
                 int param1 = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)];
 
-                instructionPointer = param1 != 0
+                int newInstructionPointer = param1 != 0
                     ? intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 2)]
-                    : instructionPointer + 3;
+                    : instructionPointer + Length;
 
-                return Nothing();
+                return Nothing(newInstructionPointer);
             }
         }
 
         private class Instruction6 : BaseInstruction
         {
-            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            public override int Length => 3;
+
+            public override Task<Tuple<int, int>> Run(IEnumerable<ParameterMode> parameterModeList, List<int> intCode, int instructionPointer)
             {
                 int param1 = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)];
 
-                instructionPointer = param1 == 0
+                int newInstructionPointer = param1 == 0
                     ? intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 2)]
-                    : instructionPointer + 3;
+                    : instructionPointer + Length;
 
-                return Nothing();
+                return Nothing(newInstructionPointer);
             }
         }
 
         private class Instruction7 : BaseInstruction
         {
-            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            public override int Length => 4;
+
+            public override Task<Tuple<int, int>> Run(IEnumerable<ParameterMode> parameterModeList, List<int> intCode, int instructionPointer)
             {
                 int param1 = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)];
                 int param2 = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 2)];
@@ -232,15 +251,15 @@ namespace AoC_2019
                     ? 1
                     : 0;
 
-                instructionPointer += 4;
-
-                return Nothing();
+                return Nothing(instructionPointer + Length);
             }
         }
 
         private class Instruction8 : BaseInstruction
         {
-            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
+            public override int Length => 4;
+
+            public override Task<Tuple<int, int>> Run(IEnumerable<ParameterMode> parameterModeList, List<int> intCode, int instructionPointer)
             {
                 int param1 = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)];
                 int param2 = intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 2)];
@@ -249,19 +268,17 @@ namespace AoC_2019
                     ? 1
                     : 0;
 
-                instructionPointer += 4;
-
-                return Nothing();
+                return Nothing(instructionPointer + Length);
             }
         }
 
         private class Instruction99 : BaseInstruction
         {
-            public override int Run(IEnumerable<ParameterMode> parameterModeList, ref List<int> intCode, ref int instructionPointer)
-            {
-                instructionPointer = InstructionPointerValueWhenHalt;
+            public override int Length => -1;
 
-                return Nothing();
+            public override Task<Tuple<int, int>> Run(IEnumerable<ParameterMode> parameterModeList, List<int> intCode, int instructionPointer)
+            {
+                return Nothing(InstructionPointerValueWhenHalt);
             }
         }
 

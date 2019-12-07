@@ -4,6 +4,7 @@ using FileParser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace AoC_2019
 {
@@ -50,36 +51,22 @@ namespace AoC_2019
             input[1] = noun;
             input[2] = verb;
 
-            var outputSequence = RunIntcodeProgram(input);
+            RunIntCodeProgram(input).Wait();
 
-            return outputSequence.First();
+            return input.First();
         }
 
-        private static ICollection<int> RunIntcodeProgram(List<int> input)
+        private static async Task<ICollection<int>> RunIntCodeProgram(List<int> intCode)
         {
-            for (int i = 0; i < input.Count;)
+            IntCodeComputer computer = new IntCodeComputer();
+
+            ICollection<int> result = new List<int>();
+            await foreach (var item in computer.RunIntCodeProgram(intCode))
             {
-                switch (input[i])
-                {
-                    case 1:
-                        input[input[i + 3]] = input[input[i + 1]] + input[input[i + 2]];
-                        break;
-
-                    case 2:
-                        input[input[i + 3]] = input[input[i + 1]] * input[input[i + 2]];
-                        break;
-
-                    case 99:
-                        return input;
-
-                    default:
-                        throw new SolvingException("Something went wrong");
-                }
-
-                i += 4;
+                result.Add(item);
             }
 
-            return input;
+            return result;
         }
 
         private IEnumerable<int> ParseInput()
