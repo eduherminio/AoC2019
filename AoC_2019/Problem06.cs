@@ -14,7 +14,7 @@ namespace AoC_2019
 
             var parent = nodes.Single(n => n.ParentId == default);
 
-            var result = parent.RelationshipCount();
+            var result = parent.RelationshipsCount();
 
             return result.ToString();
         }
