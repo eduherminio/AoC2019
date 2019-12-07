@@ -7,19 +7,23 @@ namespace AoC_2019
 {
     public static class IntCodeComputer
     {
-        private static readonly Dictionary<int, Func<ICollection<int>, IInstruction>> _supportedInstructions =
-            new Dictionary<int, Func<ICollection<int>, IInstruction>>
+        private static readonly Dictionary<int, Func<ICollection<int>, Tuple<IInstruction, ICollection<int>>>> _supportedInstructions =
+            new Dictionary<int, Func<ICollection<int>, Tuple<IInstruction, ICollection<int>>>>
             {
-                [0] = (_) => new Instruction0(),
-                [1] = (_) => new Instruction1(),
-                [2] = (_) => new Instruction2(),
-                [3] = (input) => new Instruction3(input),
-                [4] = (_) => new Instruction4(),
-                [5] = (_) => new Instruction5(),
-                [6] = (_) => new Instruction6(),
-                [7] = (_) => new Instruction7(),
-                [8] = (_) => new Instruction8(),
-                [99] = (_) => new Instruction99()
+                [0] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction0(), input),
+                [1] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction1(), input),
+                [2] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction2(), input),
+                [3] = (input) =>
+                {
+                    var result = new Instruction3(input);
+                    return Tuple.Create<IInstruction, ICollection<int>>(result, input.Skip(1).ToList());
+                },
+                [4] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction4(), input),
+                [5] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction5(), input),
+                [6] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction6(), input),
+                [7] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction7(), input),
+                [8] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction8(), input),
+                [99] = (input) => Tuple.Create<IInstruction, ICollection<int>>(new Instruction99(), input)
             };
 
         private enum ParameterMode
@@ -52,7 +56,7 @@ namespace AoC_2019
 
             List<ParameterMode> parameterModeList = CalculateParametersMode(ref opcode);
 
-            return GetInstruction(opcode, input)
+            return GetInstruction(opcode, ref input)
                 .Run(parameterModeList, ref intCode, ref instructionPointer);
         }
 
@@ -86,11 +90,14 @@ namespace AoC_2019
             };
         }
 
-        private static IInstruction GetInstruction(int instructionCode, ICollection<int> input)
+        private static IInstruction GetInstruction(int instructionCode, ref ICollection<int> input)
         {
-            if (_supportedInstructions.TryGetValue(instructionCode, out var instruction))
+            if (_supportedInstructions.TryGetValue(instructionCode, out var tupleFunc))
             {
-                return instruction.Invoke(input);
+                var tuple = tupleFunc.Invoke(input);
+                input = tuple.Item2;
+
+                return tuple.Item1;
             }
 
             throw new ArgumentException($"Instruction {instructionCode} not supported");
@@ -152,7 +159,7 @@ namespace AoC_2019
 
         private class Instruction3 : BaseInstruction
         {
-            private IEnumerable<int> _input;
+            private readonly IEnumerable<int> _input;
 
             public Instruction3(IEnumerable<int> input)
             {
@@ -165,9 +172,7 @@ namespace AoC_2019
                 {
                     throw new SolvingException("IntCode computer has run out of inputs!");
                 }
-
-                var nextInput = _input.FirstOrDefault();
-                _input = _input.Skip(1);
+                var nextInput = _input.First();
 
                 intCode[ExtractParameterValue(intCode, parameterModeList, instructionPointer, 1)] = nextInput;
 
