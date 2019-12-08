@@ -21,7 +21,7 @@ namespace AoC_2019
 
             permutations = permutations.OrderBy(_ => _).ToHashSet();
 
-            int maxThusterSignal = int.MinValue;
+            int maxThrusterSignal = int.MinValue;
             foreach (var permutation in permutations)
             {
                 var previousOutput = 0;
@@ -32,10 +32,10 @@ namespace AoC_2019
                     previousOutput = outputList.Single();
                 }
 
-                maxThusterSignal = Math.Max(previousOutput, maxThusterSignal);
+                maxThrusterSignal = Math.Max(previousOutput, maxThrusterSignal);
             }
 
-            return maxThusterSignal.ToString();
+            return maxThrusterSignal.ToString();
         }
 
         public override string Solve_2()
