@@ -27,7 +27,7 @@ namespace AoC_2019
                 var previousOutput = 0;
                 for (int ampIndex = 0; ampIndex < ampNumber; ++ampIndex)
                 {
-                    var outputList = RunIntCodeProgram(intCode, input: new[] { int.Parse(permutation[ampIndex].ToString()), previousOutput }).Result;
+                    var outputList = RunIntCodeProgramPart1(intCode, input: new[] { int.Parse(permutation[ampIndex].ToString()), previousOutput }).Result;
 
                     previousOutput = outputList.Single();
                 }
@@ -54,7 +54,7 @@ namespace AoC_2019
             {
                 ICollection<Amplifier> amplifiers = SetupAmplifiers(ampNumber, permutation).Result;
 
-                int result = CalculateOutput(amplifiers, intCode).Result;
+                int result = CalculateFeedbackLoopOutput(amplifiers, intCode).Result;
 
                 maxThusterSignal = Math.Max(result, maxThusterSignal);
             }
@@ -97,7 +97,7 @@ namespace AoC_2019
                 : 1;
         }
 
-        private static async Task<ICollection<int>> RunIntCodeProgram(List<int> intCode, IEnumerable<int> input)
+        private static async Task<ICollection<int>> RunIntCodeProgramPart1(List<int> intCode, IEnumerable<int> input)
         {
             Channel<int> channel = Channel.CreateUnbounded<int>();
             IntCodeComputer computer = new IntCodeComputer(channel);
@@ -138,7 +138,7 @@ namespace AoC_2019
             return amplifiers;
         }
 
-        private static async Task<int> CalculateOutput(ICollection<Amplifier> amplifiers, List<int> signal)
+        private static async Task<int> CalculateFeedbackLoopOutput(ICollection<Amplifier> amplifiers, List<int> signal)
         {
             IEnumerable<Task<int>> tasks = amplifiers.Select(ampl => ampl.Run(signal));
 
@@ -158,7 +158,9 @@ namespace AoC_2019
 
     public class Amplifier
     {
+#pragma warning disable S1450, IDE0052 // Private fields only used as local variables in methods should become local variables
         private readonly string _id;
+#pragma warning restore S1450, IDE0052 // Private fields only used as local variables in methods should become local variables
         private readonly Channel<int> _channel;
         private Amplifier _nextAmplifier;
         public bool Active { get; set; }
