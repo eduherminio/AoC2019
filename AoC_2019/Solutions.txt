@@ -18,3 +18,13 @@ Day 6, part 2:          514                             69 ms
 
 Day 7, part 1:          255590                          22 ms
 Day 7, part 2:          58285150                        79 ms
+
+Day 8, part 1:          2159                            129 ms
+Day 8, part 2:
+
+ oo    oo oooo o  o ooo
+o  o    o    o o  o o  o
+o       o   o  oooo o  o
+o       o  o   o  o ooo
+o  o o  o o    o  o o o
+ oo   oo  oooo o  o o  o                                115 ms
