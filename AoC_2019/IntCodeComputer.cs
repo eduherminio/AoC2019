@@ -53,7 +53,7 @@ namespace AoC_2019
 
                 if (instructionPointer == BaseInstruction.InstructionPointerValueWhenHalt)
                 {
-                    break;
+                    yield break;
                 }
 
                 if (outputCode != BaseInstruction.NullCode)
