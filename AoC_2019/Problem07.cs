@@ -5,6 +5,7 @@ using System.Linq;
 using System;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using AoC_2019.IntCode;
 
 namespace AoC_2019
 {
@@ -27,7 +28,7 @@ namespace AoC_2019
                 long previousOutput = 0;
                 for (int ampIndex = 0; ampIndex < ampNumber; ++ampIndex)
                 {
-                    var outputList = RunIntCodeProgramPart1(intCode, input: new[] { long.Parse(permutation[ampIndex].ToString()), previousOutput }).Result;
+                    var outputList = IntCodeHelpers.RunIntCodeProgram(intCode, input: new[] { long.Parse(permutation[ampIndex].ToString()), previousOutput }).Result;
 
                     previousOutput = outputList.Single();
                 }
@@ -95,25 +96,6 @@ namespace AoC_2019
             return n > 0
                 ? n * Factorial(n - 1)
                 : 1;
-        }
-
-        private static async Task<ICollection<long>> RunIntCodeProgramPart1(List<long> intCode, IEnumerable<long> input)
-        {
-            Channel<long> channel = Channel.CreateUnbounded<long>();
-            IntCodeComputer computer = new IntCodeComputer(channel);
-
-            foreach (int n in input)
-            {
-                await channel.Writer.WriteAsync(n).ConfigureAwait(false);
-            }
-
-            ICollection<long> result = new List<long>();
-            await foreach (var item in computer.RunIntCodeProgram(intCode))
-            {
-                result.Add(item);
-            }
-
-            return result;
         }
 
         private static async Task<ICollection<Amplifier>> SetupAmplifiers(int ampNumber, string permutation)

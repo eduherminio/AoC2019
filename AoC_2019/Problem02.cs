@@ -1,10 +1,10 @@
-﻿using AoCHelper;
+﻿using AoC_2019.IntCode;
+using AoCHelper;
 using AoCHelper.Helpers;
 using FileParser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace AoC_2019
 {
@@ -51,22 +51,9 @@ namespace AoC_2019
             input[1] = noun;
             input[2] = verb;
 
-            RunIntCodeProgram(input).Wait();
+            IntCodeHelpers.RunIntCodeProgram(input).Wait();
 
             return input.First();
-        }
-
-        private static async Task<ICollection<long>> RunIntCodeProgram(List<long> intCode)
-        {
-            IntCodeComputer computer = new IntCodeComputer();
-
-            ICollection<long> result = new List<long>();
-            await foreach (var item in computer.RunIntCodeProgram(intCode))
-            {
-                result.Add(item);
-            }
-
-            return result;
         }
 
         private IEnumerable<long> ParseInput()

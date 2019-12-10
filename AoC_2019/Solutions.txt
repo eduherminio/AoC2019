@@ -1,25 +1,25 @@
-Day 1, part 1:          3342946                         46 ms
+Day 1, part 1:          3342946                         27 ms
 Day 1, part 2:          5011553                         0 ms
 
-Day 2, part 1:          5290681                         10 ms
-Day 2, part 2:          5741                            75 ms
+Day 2, part 1:          5290681                         20 ms
+Day 2, part 2:          5741                            270 ms
 
-Day 3, part 1:          227                             340 ms
-Day 3, part 2:          20286                           224 ms
+Day 3, part 1:          227                             382 ms
+Day 3, part 2:          20286                           262 ms
 
-Day 4, part 1:          945                             738 ms
-Day 4, part 2:          617                             653 ms
+Day 4, part 1:          945                             270 ms
+Day 4, part 2:          617                             219 ms
 
-Day 5, part 1:          7259358                         30 ms
+Day 5, part 1:          7259358                         28 ms
 Day 5, part 2:          11826654                        1 ms
 
-Day 6, part 1:          314247                          179 ms
-Day 6, part 2:          514                             69 ms
+Day 6, part 1:          314247                          133 ms
+Day 6, part 2:          514                             50 ms
 
-Day 7, part 1:          255590                          22 ms
-Day 7, part 2:          58285150                        79 ms
+Day 7, part 1:          255590                          29 ms
+Day 7, part 2:          58285150                        108 ms
 
-Day 8, part 1:          2159                            129 ms
+Day 8, part 1:          2159                            119 ms
 Day 8, part 2:
 
  oo    oo oooo o  o ooo
@@ -27,7 +27,7 @@ o  o    o    o o  o o  o
 o       o   o  oooo o  o
 o       o  o   o  o ooo
 o  o o  o o    o  o o o
- oo   oo  oooo o  o o  o                                115 ms
+ oo   oo  oooo o  o o  o                                95 ms
 
 Day 9, part 1:          2457252183                      4 ms
-Day 9, part 2:          70634                           854 ms
+Day 9, part 2:          70634                           820 ms
