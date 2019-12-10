@@ -46,7 +46,7 @@ namespace AoC_2019
             return result.ToString();
         }
 
-        private static int CalculateOutput(int noun, int verb, List<int> input)
+        private static long CalculateOutput(long noun, long verb, List<long> input)
         {
             input[1] = noun;
             input[2] = verb;
@@ -56,11 +56,11 @@ namespace AoC_2019
             return input.First();
         }
 
-        private static async Task<ICollection<int>> RunIntCodeProgram(List<int> intCode)
+        private static async Task<ICollection<long>> RunIntCodeProgram(List<long> intCode)
         {
             IntCodeComputer computer = new IntCodeComputer();
 
-            ICollection<int> result = new List<int>();
+            ICollection<long> result = new List<long>();
             await foreach (var item in computer.RunIntCodeProgram(intCode))
             {
                 result.Add(item);
@@ -69,12 +69,12 @@ namespace AoC_2019
             return result;
         }
 
-        private IEnumerable<int> ParseInput()
+        private IEnumerable<long> ParseInput()
         {
             return new ParsedFile(FilePath)
                 .ToSingleString()
                 .Split(',')
-                .Select(int.Parse);
+                .Select(long.Parse);
         }
     }
 }

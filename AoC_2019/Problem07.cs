@@ -21,13 +21,13 @@ namespace AoC_2019
 
             permutations = permutations.OrderBy(_ => _).ToHashSet();
 
-            int maxThrusterSignal = int.MinValue;
+            long maxThrusterSignal = long.MinValue;
             foreach (var permutation in permutations)
             {
-                var previousOutput = 0;
+                long previousOutput = 0;
                 for (int ampIndex = 0; ampIndex < ampNumber; ++ampIndex)
                 {
-                    var outputList = RunIntCodeProgramPart1(intCode, input: new[] { int.Parse(permutation[ampIndex].ToString()), previousOutput }).Result;
+                    var outputList = RunIntCodeProgramPart1(intCode, input: new[] { long.Parse(permutation[ampIndex].ToString()), previousOutput }).Result;
 
                     previousOutput = outputList.Single();
                 }
@@ -49,12 +49,12 @@ namespace AoC_2019
 
             permutations = permutations.OrderBy(_ => _).ToHashSet();
 
-            int maxThusterSignal = int.MinValue;
+            long maxThusterSignal = long.MinValue;
             foreach (var permutation in permutations)
             {
                 ICollection<Amplifier> amplifiers = SetupAmplifiers(ampNumber, permutation).Result;
 
-                int result = CalculateFeedbackLoopOutput(amplifiers, intCode).Result;
+                long result = CalculateFeedbackLoopOutput(amplifiers, intCode).Result;
 
                 maxThusterSignal = Math.Max(result, maxThusterSignal);
             }
@@ -97,9 +97,9 @@ namespace AoC_2019
                 : 1;
         }
 
-        private static async Task<ICollection<int>> RunIntCodeProgramPart1(List<int> intCode, IEnumerable<int> input)
+        private static async Task<ICollection<long>> RunIntCodeProgramPart1(List<long> intCode, IEnumerable<long> input)
         {
-            Channel<int> channel = Channel.CreateUnbounded<int>();
+            Channel<long> channel = Channel.CreateUnbounded<long>();
             IntCodeComputer computer = new IntCodeComputer(channel);
 
             foreach (int n in input)
@@ -107,7 +107,7 @@ namespace AoC_2019
                 await channel.Writer.WriteAsync(n).ConfigureAwait(false);
             }
 
-            ICollection<int> result = new List<int>();
+            ICollection<long> result = new List<long>();
             await foreach (var item in computer.RunIntCodeProgram(intCode))
             {
                 result.Add(item);
@@ -138,21 +138,21 @@ namespace AoC_2019
             return amplifiers;
         }
 
-        private static async Task<int> CalculateFeedbackLoopOutput(ICollection<Amplifier> amplifiers, List<int> signal)
+        private static async Task<long> CalculateFeedbackLoopOutput(ICollection<Amplifier> amplifiers, List<long> signal)
         {
-            IEnumerable<Task<int>> tasks = amplifiers.Select(ampl => ampl.Run(signal));
+            IEnumerable<Task<long>> tasks = amplifiers.Select(ampl => ampl.Run(signal));
 
             var result = await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
 
             return result.Max();
         }
 
-        private IEnumerable<int> ParseInput()
+        private IEnumerable<long> ParseInput()
         {
             return new ParsedFile(FilePath)
                 .ToSingleString()
                 .Split(',')
-                .Select(int.Parse);
+                .Select(long.Parse);
         }
     }
 
@@ -161,14 +161,14 @@ namespace AoC_2019
 #pragma warning disable S1450, IDE0052 // Private fields only used as local variables in methods should become local variables
         private readonly string _id;
 #pragma warning restore S1450, IDE0052 // Private fields only used as local variables in methods should become local variables
-        private readonly Channel<int> _channel;
+        private readonly Channel<long> _channel;
         private Amplifier _nextAmplifier;
         public bool Active { get; set; }
 
         public Amplifier(string id)
         {
             _id = id;
-            _channel = Channel.CreateUnbounded<int>();
+            _channel = Channel.CreateUnbounded<long>();
             Active = true;
         }
 
@@ -177,9 +177,9 @@ namespace AoC_2019
             _nextAmplifier = nextAmplifier;
         }
 
-        public async Task<int> Run(List<int> signal)
+        public async Task<long> Run(List<long> signal)
         {
-            List<int> outputs = new List<int>();
+            List<long> outputs = new List<long>();
             await foreach (var item in new IntCodeComputer(_channel).RunIntCodeProgram(signal))
             {
                 outputs.Add(item);
@@ -189,7 +189,7 @@ namespace AoC_2019
             return outputs.Last();
         }
 
-        public async Task AddInput(int input)
+        public async Task AddInput(long input)
         {
             await _channel.Writer.WriteAsync(input).ConfigureAwait(false);
         }

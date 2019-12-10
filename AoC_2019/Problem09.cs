@@ -3,29 +3,30 @@ using FileParser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace AoC_2019
 {
-    public class Problem05 : BaseProblem
+    public class Problem09 : BaseProblem
     {
         public override string Solve_1()
         {
-            List<long> intCode = ParseInput().ToList();
+            var intCode = ParseInput().ToList();
 
-            ICollection<long> outputSequence = RunIntCodeProgram(intCode, input: 1).Result;
+            var output = RunIntCodeProgram(intCode, 1).Result;
 
-            return string.Join(string.Empty, outputSequence.SkipWhile(n => n == 0));
+            return output.Single().ToString();
         }
 
         public override string Solve_2()
         {
-            List<long> intCode = ParseInput().ToList();
+            var intCode = ParseInput().ToList();
 
-            ICollection<long> outputSequence = RunIntCodeProgram(intCode, input: 5).Result;
+            var output = RunIntCodeProgram(intCode, 2).Result;
 
-            return string.Join(string.Empty, outputSequence.SkipWhile(n => n == 0));
+            return output.Single().ToString();
         }
 
         private static async Task<ICollection<long>> RunIntCodeProgram(List<long> intCode, long input)

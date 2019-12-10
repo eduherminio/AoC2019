@@ -28,3 +28,6 @@ o       o   o  oooo o  o
 o       o  o   o  o ooo
 o  o o  o o    o  o o o
  oo   oo  oooo o  o o  o                                115 ms
+
+Day 9, part 1:          2457252183                      4 ms
+Day 9, part 2:          70634                           854 ms
