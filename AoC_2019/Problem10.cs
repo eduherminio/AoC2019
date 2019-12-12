@@ -44,7 +44,7 @@ namespace AoC_2019
 
             Point twoHundredth = orderedPoints[199];
 
-            return (100 * twoHundredth.X + twoHundredth.Y).ToString();
+            return ((100 * twoHundredth.X) + twoHundredth.Y).ToString();
         }
 
         private static Point ExtractOptimumLaserLocation(IEnumerable<Point> asteroidLocations)
@@ -92,36 +92,36 @@ namespace AoC_2019
                 List<Point> list = new List<Point>();
 
                 // Points located on the right side of the laser location
-                Func<Point, bool> rightSidePredicate = point => point.X > laserLocation.X;
+                bool rightSidePredicate(Point point) => point.X > laserLocation.X;
                 list.AddRange(
                     lineGroups
                         .Where(group => group.Count(rightSidePredicate) > lapIndex)
                         .Select(group => group.Where(rightSidePredicate).ElementAt(lapIndex)));
 
                 // Points located on the left side of the laser location
-                Func<Point, bool> leftSidePredicate = point => point.X < laserLocation.X;
+                bool leftSidePredicate(Point point) => point.X < laserLocation.X;
                 list.AddRange(
                     lineGroups
                         .Where(group => group.Count(leftSidePredicate) > lapIndex)
                         .Select(group => group.Where(leftSidePredicate)
                                                 .ElementAt(lapIndex)));
 
-                Func<IEnumerable<Point>, bool> infiniteMPredicate = group => double.IsInfinity(new Line(group.First(), laserLocation).M);
+                bool infiniteMPredicate(IEnumerable<Point> group) => double.IsInfinity(new Line(group.First(), laserLocation).M);
 
                 // Points located above the laser location
-                Func<Point, bool> abovePredicate = point => point.Y > laserLocation.Y;
+                bool abovePredicate(Point point) => point.Y > laserLocation.Y;
                 list.AddRange(
                     lineGroups
-                        .Where(group => group.Count(abovePredicate) > lapIndex && infiniteMPredicate.Invoke(group))
-                        .Select(group => group.Where(point => abovePredicate.Invoke(point) && infiniteMPredicate.Invoke(group))
+                        .Where(group => group.Count(abovePredicate) > lapIndex && infiniteMPredicate(group))
+                        .Select(group => group.Where(point => abovePredicate(point) && infiniteMPredicate(group))
                                                 .ElementAt(lapIndex)));
 
                 // Points located below the laser location
-                Func<Point, bool> belowPredicate = point => point.Y < laserLocation.Y;
+                bool belowPredicate(Point point) => point.Y < laserLocation.Y;
                 list.AddRange(
                     lineGroups
-                    .Where(group => group.Count(belowPredicate) > lapIndex && infiniteMPredicate.Invoke(group))
-                        .Select(group => group.Where(point => belowPredicate.Invoke(point) && infiniteMPredicate.Invoke(group))
+                    .Where(group => group.Count(belowPredicate) > lapIndex && infiniteMPredicate(group))
+                        .Select(group => group.Where(point => belowPredicate(point) && infiniteMPredicate(group))
                                                 .ElementAt(lapIndex)));
 
                 result.Add(list);
