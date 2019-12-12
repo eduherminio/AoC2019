@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace AoCHelper.Model
 {
@@ -14,13 +12,6 @@ namespace AoCHelper.Model
         public double Y0 { get; set; }
 
         public double X0 { get; set; }
-
-        public Line(double m, double x0, double y0)
-        {
-            M = m;
-            X0 = x0;
-            Y0 = y0;
-        }
 
         public Line(Point a, Point b)
         {

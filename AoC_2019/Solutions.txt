@@ -33,7 +33,7 @@ Day 9, part 1:          2457252183                      4 ms
 Day 9, part 2:          70634                           820 ms
 
 Day 10, part 1:         334                             418 ms
-Day 10, part 2:         ???
+Day 10, part 2:         1119                            260 ms
 
 Day 11, part 1:         1951                            325 ms
 Day 11, part 2:
