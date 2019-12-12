@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AoCHelper.Model;
 using System;
+using AoC_2019.Extensions;
 
 namespace AoC_2019
 {
@@ -37,41 +38,13 @@ namespace AoC_2019
 
             Point laserLocation = ExtractOptimumLaserLocation(asteroidLocations);
 
-            var unorderedLapGroups = ExtractOrderedListsOfUnorderedItems(laserLocation, asteroidLocations.Except(new[] { laserLocation }).ToList()).ToList();
+            ICollection<List<Point>> vaporizationLapGroups = GroupAsteroidsByVaporizationLap(laserLocation, asteroidLocations);
 
-            List<Point> orderedPoints = new List<Point>();
-
-            foreach (var lapGroup in unorderedLapGroups)
-            {
-                var firstHalf = lapGroup.Where(point => point.X >= laserLocation.X).ToList();
-                var firstQuadrant = firstHalf.Where(point => point.Y <= laserLocation.Y).ToList();
-                var secondQuadrant = firstHalf.Except(firstQuadrant).ToList();
-                var secondHalf = lapGroup.Except(firstHalf).ToList();
-                var forthQuadrant = secondHalf.Where(point => laserLocation.Y >= point.Y).ToList();
-                var thirdQuadrant = secondHalf.Except(forthQuadrant).ToList();
-
-                var orderedFirstQuadrant = firstQuadrant
-                    .OrderBy(point => CalculateAlphaAngle(point, laserLocation));
-
-                orderedPoints.AddRange(orderedFirstQuadrant.ToList());
-
-                var orderedSecondQuadrant = secondQuadrant.OrderByDescending(point => CalculateAlphaAngle(point, laserLocation));
-                orderedPoints.AddRange(orderedSecondQuadrant.ToList());
-
-                var orderedThirdQuadrant = thirdQuadrant.OrderBy(point => CalculateAlphaAngle(point, laserLocation));
-                orderedPoints.AddRange(orderedThirdQuadrant.ToList());
-                var orderedForthQuadrant = forthQuadrant.OrderByDescending(point => CalculateAlphaAngle(point, laserLocation));
-                orderedPoints.AddRange(orderedForthQuadrant.ToList());
-            }
+            List<Point> orderedPoints = OrderAndAppendVaporizationLapGroups(laserLocation, vaporizationLapGroups);
 
             Point twoHundredth = orderedPoints[199];
 
             return (100 * twoHundredth.X + twoHundredth.Y).ToString();
-        }
-
-        private static double CalculateAlphaAngle(Point point, Point laserLocation)
-        {
-            return Math.Atan(Math.Abs((double)(point.X - laserLocation.X) / (point.Y - laserLocation.Y)));
         }
 
         private static Point ExtractOptimumLaserLocation(IEnumerable<Point> asteroidLocations)
@@ -99,46 +72,102 @@ namespace AoC_2019
             return tuple.Item1;
         }
 
-        private static ICollection<List<Point>> ExtractOrderedListsOfUnorderedItems(Point laserLocation, ICollection<Point> asteroidLocations)
+        /// <summary>
+        /// Extracts the asteroids grouped by the lap when they're going to be vaporizated
+        /// </summary>
+        /// <param name="laserLocation"></param>
+        /// <param name="asteroidLocations"></param>
+        /// <returns></returns>
+        private static ICollection<List<Point>> GroupAsteroidsByVaporizationLap(Point laserLocation, IEnumerable<Point> asteroidLocations)
         {
-            List<List<Point>> lineGroups = asteroidLocations
+            var lineGroups = asteroidLocations
                 .Except(new[] { laserLocation })
                 .GroupBy(location => new Line(laserLocation, location))
-                .Select(group => group.OrderBy(p => p.DistanceTo(laserLocation)).ToList())
-                .ToList();
+                .Select(group => group.OrderBy(p => p.DistanceTo(laserLocation)));
 
             ICollection<List<Point>> result = new List<List<Point>>();
 
-            for (int lapIndex = 0; lapIndex < lineGroups.Max(group => group.Count); ++lapIndex)
+            for (int lapIndex = 0; lapIndex < lineGroups.Max(group => group.Count()); ++lapIndex)
             {
                 List<Point> list = new List<Point>();
 
+                // Points located on the right side of the laser location
+                Func<Point, bool> rightSidePredicate = point => point.X > laserLocation.X;
                 list.AddRange(
                     lineGroups
-                        .Where(group => group.Count(point => point.X > laserLocation.X) > lapIndex)
-                        .Select(group => group.Where(point => point.X > laserLocation.X)
-                                                .ElementAt(lapIndex)));
+                        .Where(group => group.Count(rightSidePredicate) > lapIndex)
+                        .Select(group => group.Where(rightSidePredicate).ElementAt(lapIndex)));
+
+                // Points located on the left side of the laser location
+                Func<Point, bool> leftSidePredicate = point => point.X < laserLocation.X;
                 list.AddRange(
                     lineGroups
-                        .Where(group => group.Count(point => point.X < laserLocation.X) > lapIndex)
-                        .Select(group => group.Where(point => point.X < laserLocation.X)
-                                                .ElementAt(lapIndex)));
-                list.AddRange(
-                    lineGroups
-                        .Where(group => group.Count(point => point.Y > laserLocation.Y) > lapIndex && double.IsInfinity(new Line(group.First(), laserLocation).M))
-                        .Select(group => group.Where(point => point.Y > laserLocation.Y && double.IsInfinity(new Line(group.First(), laserLocation).M))
+                        .Where(group => group.Count(leftSidePredicate) > lapIndex)
+                        .Select(group => group.Where(leftSidePredicate)
                                                 .ElementAt(lapIndex)));
 
+                Func<IEnumerable<Point>, bool> infiniteMPredicate = group => double.IsInfinity(new Line(group.First(), laserLocation).M);
+
+                // Points located above the laser location
+                Func<Point, bool> abovePredicate = point => point.Y > laserLocation.Y;
                 list.AddRange(
                     lineGroups
-                    .Where(group => group.Count(point => point.Y < laserLocation.Y) > lapIndex && double.IsInfinity(new Line(group.First(), laserLocation).M))
-                        .Select(group => group.Where(point => point.Y < laserLocation.Y && double.IsInfinity(new Line(group.First(), laserLocation).M))
+                        .Where(group => group.Count(abovePredicate) > lapIndex && infiniteMPredicate.Invoke(group))
+                        .Select(group => group.Where(point => abovePredicate.Invoke(point) && infiniteMPredicate.Invoke(group))
+                                                .ElementAt(lapIndex)));
+
+                // Points located below the laser location
+                Func<Point, bool> belowPredicate = point => point.Y < laserLocation.Y;
+                list.AddRange(
+                    lineGroups
+                    .Where(group => group.Count(belowPredicate) > lapIndex && infiniteMPredicate.Invoke(group))
+                        .Select(group => group.Where(point => belowPredicate.Invoke(point) && infiniteMPredicate.Invoke(group))
                                                 .ElementAt(lapIndex)));
 
                 result.Add(list);
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Orders the asteroids within each one of the laps and returns all of them in vaporization order
+        /// </summary>
+        /// <param name="laserLocation"></param>
+        /// <param name="vaporizationLapGroups">Asteroids grouped by the lap when they're going to be vaporizated, but unordered</param>
+        /// <returns></returns>
+        private static List<Point> OrderAndAppendVaporizationLapGroups(Point laserLocation, IEnumerable<IEnumerable<Point>> vaporizationLapGroups)
+        {
+            List<Point> orderedPoints = new List<Point>();
+
+            foreach (var lapGroup in vaporizationLapGroups)
+            {
+                var firstHalf = lapGroup.Where(point => point.X >= laserLocation.X);
+                var firstQuadrant = firstHalf.Where(point => point.Y <= laserLocation.Y);
+                var secondQuadrant = firstHalf.Except(firstQuadrant);
+                var secondHalf = lapGroup.Except(firstHalf);
+                var forthQuadrant = secondHalf.Where(point => laserLocation.Y >= point.Y);
+                var thirdQuadrant = secondHalf.Except(forthQuadrant);
+
+                var orderedFirstQuadrant = firstQuadrant.OrderBy(point => CalculateAlphaAngle(point, laserLocation));
+                orderedPoints.AddRange(orderedFirstQuadrant.ToList());
+
+                var orderedSecondQuadrant = secondQuadrant.OrderByDescending(point => CalculateAlphaAngle(point, laserLocation));
+                orderedPoints.AddRange(orderedSecondQuadrant.ToList());
+
+                var orderedThirdQuadrant = thirdQuadrant.OrderBy(point => CalculateAlphaAngle(point, laserLocation));
+                orderedPoints.AddRange(orderedThirdQuadrant.ToList());
+
+                var orderedForthQuadrant = forthQuadrant.OrderByDescending(point => CalculateAlphaAngle(point, laserLocation));
+                orderedPoints.AddRange(orderedForthQuadrant.ToList());
+            }
+
+            return orderedPoints;
+        }
+
+        private static double CalculateAlphaAngle(Point point, Point laserLocation)
+        {
+            return Math.Atan(Math.Abs((double)(point.X - laserLocation.X) / (point.Y - laserLocation.Y)));
         }
 
         private IEnumerable<Point> ParseInput()
@@ -159,16 +188,6 @@ namespace AoC_2019
 
                 ++y;
             }
-        }
-    }
-
-    public static class PointExtensions
-    {
-        public static double DistanceTo(this Point point, Point otherPoint)
-        {
-            return Math.Sqrt(
-                Math.Pow(otherPoint.X - point.X, 2)
-                + Math.Pow(otherPoint.Y - point.Y, 2));
         }
     }
 }

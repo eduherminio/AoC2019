@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AoC_2019.Extensions;
+using System;
 
 namespace AoCHelper.Model
 {
@@ -98,15 +99,5 @@ namespace AoCHelper.Model
             return !line1.Equals(line2);
         }
         #endregion
-    }
-
-    public static class DoubleExtensions
-    {
-        const double delta = 0.0000001;
-
-        public static bool DoubleEquals(this double left, double right)
-        {
-            return Math.Abs(left - right) < delta;
-        }
     }
 }
