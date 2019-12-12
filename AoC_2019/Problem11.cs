@@ -42,20 +42,14 @@ namespace AoC_2019
         {
             var visitedPoints = await new Robot(initialColor).Run(input).ConfigureAwait(false);
 
-            //StringBuilder sb = new StringBuilder();
-
-            //var grid = Point.GeneratePointRangeIteratingOverXFirst(
-            //    RangeHelpers.GenerateRange(visitedPoints.Keys.Min(p => p.X), visitedPoints.Keys.Max(p => p.X)),
-            //    RangeHelpers.GenerateRange(visitedPoints.Keys.Min(p => p.Y), visitedPoints.Keys.Max(p => p.Y)));
-
             StringBuilder sb = new StringBuilder(Environment.NewLine);
             for (int y = visitedPoints.Keys.Min(p => p.Y); y <= visitedPoints.Keys.Max(p => p.Y); ++y)
             {
                 sb.Append(Environment.NewLine);
                 for (int x = visitedPoints.Keys.Min(p => p.X); x <= visitedPoints.Keys.Max(p => p.X); ++x)
                 {
-                    sb.Append(visitedPoints.TryGetValue(new Point(x, y), out Color color)
-                        ? color == Color.White ? "o" : " "
+                    sb.Append(visitedPoints.TryGetValue(new Point(x, y), out Color color) && color == Color.White
+                        ? "o"
                         : " ");
                 }
             }
