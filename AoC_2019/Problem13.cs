@@ -79,6 +79,7 @@ namespace AoC_2019
 
             long score = 0;
             List<long> output = new List<long>(3);
+            HashSet<Piece> pieces = new HashSet<Piece>();
             int outputIndex = 0;
             await foreach (var partialOutput in computer.RunIntCodeProgram(intCode.ToList()))
             {
@@ -95,6 +96,15 @@ namespace AoC_2019
                     else
                     {
                         Piece updatedPiece = GeneratePiece(output[0], output[1], output[2]);
+                        if (!pieces.TryGetValue(updatedPiece, out Piece existingPiece))
+                        {
+                            pieces.Add(updatedPiece);
+                        }
+                        else
+                        {
+                            existingPiece.Position.X = updatedPiece.Position.X;
+                            existingPiece.Position.Y = updatedPiece.Position.Y;
+                        }
                     }
 
                     output = new List<long>(3);
@@ -113,7 +123,7 @@ namespace AoC_2019
         }
     }
 
-    public abstract class Piece
+    public abstract class Piece : IEquatable<Piece>
     {
         public string Id { get; private set; }
 
@@ -124,6 +134,40 @@ namespace AoC_2019
             Id = id.ToString();
             Position = new Point((int)x, (int)y);
         }
+
+        #region Equals override
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null)
+            {
+                return false;
+            }
+
+            if (!(obj is Piece))
+            {
+                return false;
+            }
+
+            return Equals((Piece)obj);
+        }
+
+        public bool Equals(Piece other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            return Id == other.Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode();
+        }
+
+        #endregion
     }
 
     public class Wall : Piece { }
