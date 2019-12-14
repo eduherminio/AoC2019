@@ -8,7 +8,8 @@ namespace AoC_2019
         {
             ProblemSolver problemSolver = new ProblemSolver();
 
-            problemSolver.SolveAllProblemsWithMetrics();
+            //problemSolver.SolveAllProblemsWithMetrics();
+            problemSolver.SolveWithMetrics<Problem13>();
         }
     }
 }
