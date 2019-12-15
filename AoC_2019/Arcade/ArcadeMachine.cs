@@ -97,9 +97,12 @@ namespace AoC_2019.Arcade
             int previousSequenceSize = -1;
             int itemsToSkipFromBestSolution = 0;
             long topScore = 0;
+            long previousScore = 0;
+            long previousPreviousScore = 0;
+            int previousPiecesLeft = int.MaxValue;
             while (true)
             {
-                //Task.Run(ComputerOutputThread);
+                Task.Run(ComputerOutputThread);
 
                 List<int> usedSequence = winningSequence.SkipLast(itemsToSkipFromBestSolution).ToList();
 
@@ -110,7 +113,16 @@ namespace AoC_2019.Arcade
 
                 for (int i = usedSequence.Count; i < 10000; ++i)
                 {
-                    int randomInput = GenerateRandomInput();
+                    int testedInput = winningSequence.Count - 1 - itemsToSkipFromBestSolution > 0
+                        ? winningSequence.ElementAt(winningSequence.Count - 1 - itemsToSkipFromBestSolution)
+                        : 0;
+
+                    int randomInput = testedInput;
+                    while (randomInput == testedInput)
+                    {
+                        randomInput = GenerateRandomInput();
+                    }
+
                     if (_userInputChannel.Writer.TryWrite(randomInput))
                     {
                         usedSequence.Add(randomInput);
@@ -119,7 +131,7 @@ namespace AoC_2019.Arcade
 
                 long score = 0;
                 List<long> output = new List<long>(3);
-                HashSet<Piece> pieces = new HashSet<Piece>();
+                HashSet<Piece> existingPieces = new HashSet<Piece>();
 
                 int outputIndex = 0;
                 long highestScore = 0;
@@ -135,14 +147,39 @@ namespace AoC_2019.Arcade
                         {
                             score = output[2];
                             highestScore = score > highestScore ? score : highestScore;
-                            //Console.WriteLine($"Current score: {score}");
                         }
                         else
                         {
                             Piece piece = GeneratePiece(output[0], output[1], output[2]);
                             if (piece != null)
                             {
-                                pieces.Add(piece);
+                                //pieces.Add(piece);
+                                if (existingPieces.TryGetValue(piece, out Piece existingPiece))
+                                {
+                                    existingPieces.Remove(existingPiece);
+
+                                    if (piece is Ball)
+                                    {
+                                        // comprobar también justo arriba y justo abajo
+
+                                        Point bouncePosition = existingPiece.Position.X > piece.Position.X
+                                            ? existingPiece.Position.Y > piece.Position.Y
+                                                ? new Point(piece.Position.X - 1, piece.Position.Y - 1)
+                                                : new Point(piece.Position.X - 1, piece.Position.Y + 1)
+                                            : existingPiece.Position.Y > piece.Position.Y
+                                                ? new Point(piece.Position.X + 1, piece.Position.Y - 1)
+                                                : new Point(piece.Position.X + 1, piece.Position.Y + 1);
+
+                                        Piece block = GeneratePiece(bouncePosition.X, bouncePosition.Y, 2);
+                                        if (existingPieces.Contains(block))
+                                        {
+                                            existingPieces.Remove(block);
+                                        }
+                                    }
+                                }
+
+                                existingPieces.Add(piece);
+
                                 _computerOutputChannel.Writer.TryWrite(piece);
                             }
                         }
@@ -151,64 +188,60 @@ namespace AoC_2019.Arcade
                     }
                 }
 
-                if (highestScore > topScore)
-                {
-                    topScore = highestScore;
-                    Console.WriteLine($"New score: {topScore} (attempt #{attemptIndex})");
-                }
-
-                if (!pieces.Any(p => p is Block))
+                if (!existingPieces.Any(p => p is Block))
                 {
                     return score;
                 }
+
 
                 int unusedInputs = 0;
                 while (_userInputChannel.Reader.TryRead(out var _))
                 {
                     ++unusedInputs;
                 }
-
                 int processedInputs = inputNumber - unusedInputs;
 
-                //if (processedInputs > winningSequence.Count)
-                //{
-                //    winningSequence = usedSequence.Take(processedInputs).ToList();
-                //}
-
-                //if (previousWinningSequenceSize <= winningSequence.Count)
-                //{
-                //    winningSequence = winningSequence.SkipLast(1).ToList();
-                //}
-                //previousWinningSequenceSize = winningSequence.Count;
-
-                //Console.WriteLine($"Attempting [{string.Join(",", usedSequence.Take(processedInputs))}]");
-
-                if (processedInputs > winningSequence.Count && processedInputs > 4)
-                {
-                    winningSequence = usedSequence.Take(processedInputs).ToList();
-                }
-
-                if (processedInputs > previousSequenceSize)
+                if (existingPieces.Count < previousPiecesLeft
+                    //highestScore > topScore
+                    || (processedInputs > winningSequence.Count && processedInputs > 4)
+                    )
                 {
                     itemsToSkipFromBestSolution = 0;
+
+                    topScore = highestScore;
+                    winningSequence = usedSequence.Take(processedInputs).ToList();
+                    Console.WriteLine($"New score: {topScore} (attempt #{attemptIndex}) | {existingPieces.Count(p => p is Block)} pieces left");
                 }
-                else if (processedInputs == previousSequenceSize)
+
+                if (existingPieces.Count == previousPiecesLeft)
                 {
                     ++itemsToSkipFromBestSolution;
                 }
-                else
-                {
-                    //winningSequence = winningSequence.SkipLast(1).ToList();
-                    //--itemsToSkipFromBestSolution;
-                }
+                //else if (existingPieces.Count > previousPiecesLeft)
+                //{
+                //    --itemsToSkipFromBestSolution;
+                //}
 
+                //if ((highestScore == previousScore)
+                //     && itemsToSkipFromBestSolution < _grid.IndexOf(Environment.NewLine) + Environment.NewLine.Length)
+                //{
+                //    if (highestScore == previousPreviousScore)
+                //    {
+                //        ++itemsToSkipFromBestSolution;
+                //    }
+                //}
+                //else if (highestScore < previousScore)  //   TODO revert?
+                //{
+                //    --itemsToSkipFromBestSolution;
+                //}
 
-                previousSequenceSize = processedInputs;
+                previousPreviousScore = previousScore;
+                previousScore = highestScore;
+                previousPiecesLeft = existingPieces.Count;
 
                 _computerOutputChannel.Writer.Complete();
                 _computerOutputChannel = Channel.CreateUnbounded<Piece>();
 
-                Console.WriteLine($"Score (attempt #{attemptIndex}, pieces left: {pieces.Count(p => p is Block)}): {score}");
                 ++attemptIndex;
             }
         }
@@ -234,8 +267,12 @@ namespace AoC_2019.Arcade
                     if (piece is Ball)
                     {
                         Point bouncePosition = existingPiece.Position.X > piece.Position.X
-                            ? new Point(piece.Position.X - 1, piece.Position.Y - 1)
-                            : new Point(piece.Position.X + 1, piece.Position.Y - 1);
+                            ? existingPiece.Position.Y > piece.Position.Y
+                                ? new Point(piece.Position.X - 1, piece.Position.Y - 1)
+                                : new Point(piece.Position.X - 1, piece.Position.Y + 1)
+                            : existingPiece.Position.Y > piece.Position.Y
+                                ? new Point(piece.Position.X + 1, piece.Position.Y - 1)
+                                : new Point(piece.Position.X + 1, piece.Position.Y + 1);
 
                         Piece block = GeneratePiece(bouncePosition.X, bouncePosition.Y, 2);
                         if (existingPieces.Contains(block))
@@ -253,6 +290,9 @@ namespace AoC_2019.Arcade
                 Console.Out.Flush();
                 Console.WriteLine(_grid);
             }
+
+            Console.WriteLine($"{existingPieces.Count(p => p is Block)} pieces left");
+
         }
 
         private async Task UserInputThread(DifficultyLevel difficultyLevel)
