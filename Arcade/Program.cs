@@ -18,11 +18,11 @@ namespace Arcade
             {
                 ArcadeMachine arcadeMachine = new ArcadeMachine(ParseInput().ToList());
 
-                long score = arcadeMachine.Play(DifficultyLevel.Master).Result;
+                long score = arcadeMachine.Play(DifficultyLevel.Easy).Result;
 
                 Console.WriteLine($"Score: {score}");
 
-                Console.Write("Press any key to play again");
+                Console.WriteLine("Press any key to play again");
 
                 Console.ReadKey();
 

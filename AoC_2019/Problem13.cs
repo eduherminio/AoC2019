@@ -26,7 +26,7 @@ namespace AoC_2019
 
             ArcadeMachine arcadeMachine = new ArcadeMachine(intCode);
 
-            long score = arcadeMachine.Play(DifficultyLevel.Beginner).Result;
+            long score = arcadeMachine.PlayCheating().Result;
 
             return score.ToString();
         }

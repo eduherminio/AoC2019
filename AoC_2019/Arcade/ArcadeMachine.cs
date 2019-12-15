@@ -3,6 +3,7 @@ using AoC_2019.IntCode;
 using AoCHelper;
 using AoCHelper.Model;
 using EasyAsyncCancel;
+using MersenneTwister;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,22 +15,26 @@ namespace AoC_2019.Arcade
 {
     public class ArcadeMachine
     {
-        private readonly List<long> _sourceCode;
+        private readonly List<long> _originalCode;
         private readonly IntCodeComputer _intCodeComputer;
         private readonly Channel<long> _userInputChannel;
-        private readonly Channel<Piece> _computerOutputChannel;
+        private Channel<Piece> _computerOutputChannel;
         private string _grid;
+
+        private static readonly Random _rnd = Randoms.Create(RandomType.FastestInt32);
 
         public ArcadeMachine(List<long> intCode)
         {
-            _grid = CreateBaseGrid(intCode);
-            _sourceCode = intCode;
-            _sourceCode[0] = 2;
+            _grid = CreateBaseGrid((long[])intCode.ToArray().Clone());
+            _originalCode = intCode;
+            _originalCode[0] = 2;
 
             _userInputChannel = Channel.CreateUnbounded<long>();
             _computerOutputChannel = Channel.CreateUnbounded<Piece>();
             _intCodeComputer = new IntCodeComputer(_userInputChannel);
         }
+
+        private List<long> GetSourceCode() => ((long[])_originalCode.ToArray().Clone()).ToList();
 
         public async Task<long> Play(DifficultyLevel difficultyLevel)
         {
@@ -44,7 +49,7 @@ namespace AoC_2019.Arcade
             Task.Run(ComputerOutputThread);
             Task.Run(() => UserInputThread(difficultyLevel));
 
-            await foreach (var partialOutput in _intCodeComputer.RunIntCodeProgram(_sourceCode))
+            await foreach (var partialOutput in _intCodeComputer.RunIntCodeProgram(GetSourceCode()))
             {
                 output.Add(partialOutput);
                 outputIndex++;
@@ -81,43 +86,172 @@ namespace AoC_2019.Arcade
             return score;
         }
 
+        public async Task<long> PlayCheating()
+        {
+            const long xWhenScore = -1;
+            const long yWhenScore = 0;
+            const int inputNumber = 10000;
+
+            int attemptIndex = 1;
+            List<int> winningSequence = new List<int>();
+            int previousSequenceSize = -1;
+            int itemsToSkipFromBestSolution = 0;
+            long topScore = 0;
+            while (true)
+            {
+                //Task.Run(ComputerOutputThread);
+
+                List<int> usedSequence = winningSequence.SkipLast(itemsToSkipFromBestSolution).ToList();
+
+                foreach (int n in usedSequence)
+                {
+                    _userInputChannel.Writer.TryWrite(n);
+                }
+
+                for (int i = usedSequence.Count; i < 10000; ++i)
+                {
+                    int randomInput = GenerateRandomInput();
+                    if (_userInputChannel.Writer.TryWrite(randomInput))
+                    {
+                        usedSequence.Add(randomInput);
+                    }
+                }
+
+                long score = 0;
+                List<long> output = new List<long>(3);
+                HashSet<Piece> pieces = new HashSet<Piece>();
+
+                int outputIndex = 0;
+                long highestScore = 0;
+                await foreach (var partialOutput in _intCodeComputer.RunIntCodeProgram(GetSourceCode()))
+                {
+                    output.Add(partialOutput);
+                    outputIndex++;
+
+                    outputIndex %= 3;
+                    if (outputIndex == 0)
+                    {
+                        if (output[0] == xWhenScore && output[1] == yWhenScore)
+                        {
+                            score = output[2];
+                            highestScore = score > highestScore ? score : highestScore;
+                            //Console.WriteLine($"Current score: {score}");
+                        }
+                        else
+                        {
+                            Piece piece = GeneratePiece(output[0], output[1], output[2]);
+                            if (piece != null)
+                            {
+                                pieces.Add(piece);
+                                _computerOutputChannel.Writer.TryWrite(piece);
+                            }
+                        }
+
+                        output.Clear();
+                    }
+                }
+
+                if (highestScore > topScore)
+                {
+                    topScore = highestScore;
+                    Console.WriteLine($"New score: {topScore} (attempt #{attemptIndex})");
+                }
+
+                if (!pieces.Any(p => p is Block))
+                {
+                    return score;
+                }
+
+                int unusedInputs = 0;
+                while (_userInputChannel.Reader.TryRead(out var _))
+                {
+                    ++unusedInputs;
+                }
+
+                int processedInputs = inputNumber - unusedInputs;
+
+                //if (processedInputs > winningSequence.Count)
+                //{
+                //    winningSequence = usedSequence.Take(processedInputs).ToList();
+                //}
+
+                //if (previousWinningSequenceSize <= winningSequence.Count)
+                //{
+                //    winningSequence = winningSequence.SkipLast(1).ToList();
+                //}
+                //previousWinningSequenceSize = winningSequence.Count;
+
+                //Console.WriteLine($"Attempting [{string.Join(",", usedSequence.Take(processedInputs))}]");
+
+                if (processedInputs > winningSequence.Count && processedInputs > 4)
+                {
+                    winningSequence = usedSequence.Take(processedInputs).ToList();
+                }
+
+                if (processedInputs > previousSequenceSize)
+                {
+                    itemsToSkipFromBestSolution = 0;
+                }
+                else if (processedInputs == previousSequenceSize)
+                {
+                    ++itemsToSkipFromBestSolution;
+                }
+                else
+                {
+                    //winningSequence = winningSequence.SkipLast(1).ToList();
+                    //--itemsToSkipFromBestSolution;
+                }
+
+
+                previousSequenceSize = processedInputs;
+
+                _computerOutputChannel.Writer.Complete();
+                _computerOutputChannel = Channel.CreateUnbounded<Piece>();
+
+                Console.WriteLine($"Score (attempt #{attemptIndex}, pieces left: {pieces.Count(p => p is Block)}): {score}");
+                ++attemptIndex;
+            }
+        }
+
+        private static int GenerateRandomInput()
+        {
+            return _rnd.Next(-1, 2);
+        }
+
         private async Task ComputerOutputThread()
         {
             HashSet<Piece> existingPieces = new HashSet<Piece>();
 
-            while (true)
+            await _computerOutputChannel.Reader.WaitToReadAsync().ConfigureAwait(false);
+            await foreach (Piece piece in _computerOutputChannel.Reader.ReadAllAsync())
             {
-                await _computerOutputChannel.Reader.WaitToReadAsync().ConfigureAwait(false);
-                await foreach (Piece piece in _computerOutputChannel.Reader.ReadAllAsync())
+                ICollection<Piece> piecesToUpdate = new List<Piece>(3) { piece };
+                if (existingPieces.TryGetValue(piece, out Piece existingPiece))
                 {
-                    ICollection<Piece> piecesToUpdate = new List<Piece>(3) { piece };
-                    if (existingPieces.TryGetValue(piece, out Piece existingPiece))
+                    existingPieces.Remove(existingPiece);
+                    piecesToUpdate.Add(new EmptyPiece(existingPiece));
+
+                    if (piece is Ball)
                     {
-                        existingPieces.Remove(existingPiece);
-                        piecesToUpdate.Add(new EmptyPiece(existingPiece));
+                        Point bouncePosition = existingPiece.Position.X > piece.Position.X
+                            ? new Point(piece.Position.X - 1, piece.Position.Y - 1)
+                            : new Point(piece.Position.X + 1, piece.Position.Y - 1);
 
-                        if (piece is Ball)
+                        Piece block = GeneratePiece(bouncePosition.X, bouncePosition.Y, 2);
+                        if (existingPieces.Contains(block))
                         {
-                            Point bouncePosition = existingPiece.Position.X > piece.Position.X
-                                ? new Point(piece.Position.X - 1, piece.Position.Y - 1)
-                                : new Point(piece.Position.X + 1, piece.Position.Y - 1);
-
-                            Piece block = GeneratePiece(bouncePosition.X, bouncePosition.Y, 2);
-                            if (existingPieces.Contains(block))
-                            {
-                                existingPieces.Remove(block);
-                                piecesToUpdate.Add(new EmptyPiece(block));
-                            }
+                            existingPieces.Remove(block);
+                            piecesToUpdate.Add(new EmptyPiece(block));
                         }
                     }
-
-                    existingPieces.Add(piece);
-
-                    UpdatePieceInGrid(piecesToUpdate);
-
-                    Console.Out.Flush();
-                    Console.WriteLine(_grid);
                 }
+
+                existingPieces.Add(piece);
+
+                UpdatePieceInGrid(piecesToUpdate);
+
+                Console.Out.Flush();
+                Console.WriteLine(_grid);
             }
         }
 
