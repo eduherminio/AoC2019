@@ -21,44 +21,80 @@ namespace AoC_2019
 
             if (_formulas.Select(f => _formulas.Count(form => form.Result == f.Result)).ToHashSet().Count != 1)
             {
-                throw new SolvingException("Multiple formulas have the same component as result, aka, you're fucked");
+                throw new SolvingException("Multiple formulas have the same component as result, aka, you're fucked up");
             }
-
-            Dictionary<Element, int> excedent = new Dictionary<Element, int>(
-                _formulas
-                .SelectMany(f => f.Reactives.Select(r => r.Element))
-                .ToHashSet()
-                .Select(element => new KeyValuePair<Element, int>(element, 0)));
 
             var fuelFormula = _formulas.Single(f => f.Result.Element.Id == Fuel);
 
-            excedent.Add(fuelFormula.Result.Element, 0);
-
-            int result = CalculateRealOre(fuelFormula.Result, excedent);
+            long result = CalculateRealOre(fuelFormula.Result, GenerateEmptyExcedent());
 
             return result.ToString();
         }
 
-        private int CalculateIdealOre(Component component)
+        public override string Solve_2()
         {
-            return component.Element.Id == Ore
-                ? component.Quantity
-                : component.Quantity *
-                    _formulas
-                        .Where(f => f.Result.Element == component.Element)
-                        .Min(f => f.Reactives.Sum(CalculateIdealOre) / f.Result.Quantity);
+            _formulas = ParseInput().ToList();
+
+            if (_formulas.Select(f => _formulas.Count(form => form.Result == f.Result)).ToHashSet().Count != 1)
+            {
+                throw new SolvingException("Multiple formulas have the same component as result, aka, you're fucked");
+            }
+
+            Dictionary<Element, long> excedent = GenerateEmptyExcedent();
+
+            var fuelFormula = _formulas.Single(f => f.Result.Element.Id == Fuel);
+
+            long orePerFuel = CalculateRealOre(fuelFormula.Result, excedent);
+
+            const long availableOre = 1_000_000_000_000;
+            const long initialIterationInterval = 1000;
+
+            long fuelAmmount = 2 * availableOre / orePerFuel;
+
+            while (true)
+            {
+                long oresNeeded = CalculateRealOre(fuelFormula.Result, GenerateEmptyExcedent(), numberofComponents: fuelAmmount);
+                if (oresNeeded < availableOre)
+                {
+                    while (true)
+                    {
+                        oresNeeded = CalculateRealOre(fuelFormula.Result, GenerateEmptyExcedent(), numberofComponents: fuelAmmount);
+
+                        if (oresNeeded > availableOre)
+                        {
+                            return (fuelAmmount - 1).ToString();
+                        }
+                        ++fuelAmmount;
+                    }
+                }
+
+                fuelAmmount -= initialIterationInterval;
+            }
         }
 
-        private int CalculateRealOre(Component component, Dictionary<Element, int> excedent, int numberofComponents = 1)
+        private Dictionary<Element, long> GenerateEmptyExcedent()
         {
-            int elementsToCreate = component.Quantity * numberofComponents;
+            var result = new Dictionary<Element, long>(
+                _formulas
+                .SelectMany(f => f.Reactives.Select(r => r.Element))
+                .ToHashSet()
+                .Select(element => new KeyValuePair<Element, long>(element, 0)));
+
+            result.Add(new Element(id: Fuel), 0);
+
+            return result;
+        }
+
+        private long CalculateRealOre(Component component, Dictionary<Element, long> excedent, long numberofComponents = 1)
+        {
+            long elementsToCreate = component.Quantity * numberofComponents;
 
             if (component.Element.Id == Ore)
             {
                 return elementsToCreate;
             }
 
-            if (excedent.TryGetValue(component.Element, out int existing))
+            if (excedent.TryGetValue(component.Element, out long existing))
             {
                 if (existing >= elementsToCreate)
                 {
@@ -79,7 +115,7 @@ namespace AoC_2019
 
             Formula formula = _formulas.Single(f => f.Result.Element.Equals(component.Element));
 
-            int reactionsToStart = 1;
+            long reactionsToStart = 1;
             if (formula.Result.Quantity < elementsToCreate)
             {
                 reactionsToStart =
@@ -87,18 +123,11 @@ namespace AoC_2019
                     ? elementsToCreate / formula.Result.Quantity
                     : (elementsToCreate / formula.Result.Quantity) + 1;
             }
-            int elementExcedent = (reactionsToStart * formula.Result.Quantity) - elementsToCreate;
+            long elementExcedent = (reactionsToStart * formula.Result.Quantity) - elementsToCreate;
 
             excedent[component.Element] += elementExcedent;
 
             return formula.Reactives.Sum(r => CalculateRealOre(r, excedent, reactionsToStart));
-        }
-
-        public override string Solve_2()
-        {
-            _formulas = ParseInput().ToList();
-
-            return "";
         }
 
         private IEnumerable<Formula> ParseInput()
