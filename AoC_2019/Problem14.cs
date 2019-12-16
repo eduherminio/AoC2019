@@ -1,5 +1,4 @@
-﻿using AoC_2019.IntCode;
-using AoC_2019.Model;
+﻿using AoC_2019.Model;
 using AoCHelper;
 using FileParser;
 using System;
@@ -21,12 +20,12 @@ namespace AoC_2019
 
             if (_formulas.Select(f => _formulas.Count(form => form.Result == f.Result)).ToHashSet().Count != 1)
             {
-                throw new SolvingException("Multiple formulas have the same component as result, aka, you're fucked up");
+                throw new SolvingException("Multiple formulas have the same component as result, a.k.a., you're fucked up");
             }
 
             var fuelFormula = _formulas.Single(f => f.Result.Element.Id == Fuel);
 
-            long result = CalculateRealOre(fuelFormula.Result, GenerateEmptyExcedent());
+            long result = CalculateOre(fuelFormula.Result, GenerateEmptySurplus());
 
             return result.ToString();
         }
@@ -37,55 +36,53 @@ namespace AoC_2019
 
             if (_formulas.Select(f => _formulas.Count(form => form.Result == f.Result)).ToHashSet().Count != 1)
             {
-                throw new SolvingException("Multiple formulas have the same component as result, aka, you're fucked");
+                throw new SolvingException("Multiple formulas have the same component as result, a.k.a., you're fucked up");
             }
-
-            Dictionary<Element, long> excedent = GenerateEmptyExcedent();
 
             var fuelFormula = _formulas.Single(f => f.Result.Element.Id == Fuel);
 
-            long orePerFuel = CalculateRealOre(fuelFormula.Result, excedent);
+            long orePerFuel = CalculateOre(fuelFormula.Result, GenerateEmptySurplus());
 
             const long availableOre = 1_000_000_000_000;
             const long initialIterationInterval = 1000;
 
-            long fuelAmmount = 2 * availableOre / orePerFuel;
+            // Max fuel amount that could be created, having 99.99% of surplus
+            long fuelAmount = 2 * availableOre / orePerFuel;
 
             while (true)
             {
-                long oresNeeded = CalculateRealOre(fuelFormula.Result, GenerateEmptyExcedent(), numberofComponents: fuelAmmount);
+                long oresNeeded = CalculateOre(fuelFormula.Result, GenerateEmptySurplus(), numberofComponents: fuelAmount);
                 if (oresNeeded < availableOre)
                 {
                     while (true)
                     {
-                        oresNeeded = CalculateRealOre(fuelFormula.Result, GenerateEmptyExcedent(), numberofComponents: fuelAmmount);
+                        oresNeeded = CalculateOre(fuelFormula.Result, GenerateEmptySurplus(), numberofComponents: fuelAmount);
 
                         if (oresNeeded > availableOre)
                         {
-                            return (fuelAmmount - 1).ToString();
+                            return (fuelAmount - 1).ToString();
                         }
-                        ++fuelAmmount;
+                        ++fuelAmount;
                     }
                 }
 
-                fuelAmmount -= initialIterationInterval;
+                fuelAmount -= initialIterationInterval;
             }
         }
 
-        private Dictionary<Element, long> GenerateEmptyExcedent()
+        private Dictionary<Element, long> GenerateEmptySurplus()
         {
-            var result = new Dictionary<Element, long>(
+            return new Dictionary<Element, long>(
                 _formulas
                 .SelectMany(f => f.Reactives.Select(r => r.Element))
                 .ToHashSet()
-                .Select(element => new KeyValuePair<Element, long>(element, 0)));
-
-            result.Add(new Element(id: Fuel), 0);
-
-            return result;
+                .Select(element => new KeyValuePair<Element, long>(element, 0)))
+            {
+                [new Element(id: Fuel)] = 0
+            };
         }
 
-        private long CalculateRealOre(Component component, Dictionary<Element, long> excedent, long numberofComponents = 1)
+        private long CalculateOre(Component component, Dictionary<Element, long> surplus, long numberofComponents = 1)
         {
             long elementsToCreate = component.Quantity * numberofComponents;
 
@@ -94,16 +91,16 @@ namespace AoC_2019
                 return elementsToCreate;
             }
 
-            if (excedent.TryGetValue(component.Element, out long existing))
+            if (surplus.TryGetValue(component.Element, out long existing))
             {
                 if (existing >= elementsToCreate)
                 {
-                    excedent[component.Element] = existing - elementsToCreate;
+                    surplus[component.Element] = existing - elementsToCreate;
                     elementsToCreate = 0;
                 }
                 else
                 {
-                    excedent[component.Element] = 0;
+                    surplus[component.Element] = 0;
                     elementsToCreate -= existing;
                 }
             }
@@ -123,11 +120,11 @@ namespace AoC_2019
                     ? elementsToCreate / formula.Result.Quantity
                     : (elementsToCreate / formula.Result.Quantity) + 1;
             }
-            long elementExcedent = (reactionsToStart * formula.Result.Quantity) - elementsToCreate;
+            long elementSurplus = (reactionsToStart * formula.Result.Quantity) - elementsToCreate;
 
-            excedent[component.Element] += elementExcedent;
+            surplus[component.Element] += elementSurplus;
 
-            return formula.Reactives.Sum(r => CalculateRealOre(r, excedent, reactionsToStart));
+            return formula.Reactives.Sum(r => CalculateOre(r, surplus, reactionsToStart));
         }
 
         private IEnumerable<Formula> ParseInput()
@@ -161,6 +158,10 @@ namespace AoC_2019
         }
     }
 
+    /// <summary>
+    /// A component only makes sense within the context of a Formular,
+    /// since it's just a number of same-kind elements
+    /// </summary>
     public class Component
     {
         public Element Element { get; set; }
@@ -203,6 +204,9 @@ namespace AoC_2019
         }
     }
 
+    /// <summary>
+    /// Used to store surplus in a more easy/natural way
+    /// </summary>
     public class Element : IEquatable<Element>
     {
         public string Id { get; set; }
