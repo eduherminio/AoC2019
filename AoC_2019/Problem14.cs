@@ -226,12 +226,12 @@ namespace AoC_2019
                 return false;
             }
 
-            if (!(obj is Point))
+            if (!(obj is Element))
             {
                 return false;
             }
 
-            return Equals((Point)obj);
+            return Equals((Element)obj);
         }
 
         public bool Equals(Element other)
