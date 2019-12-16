@@ -66,6 +66,10 @@ namespace AoC_2019.IntCode
                 {
                     yield return outputCode;
                 }
+                if (instructionPointer == BaseInstruction.InstructionPointerValueWhenHalt)
+                {
+                    yield break;
+                }
             }
         }
 
