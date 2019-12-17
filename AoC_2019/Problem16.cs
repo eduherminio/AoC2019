@@ -23,6 +23,10 @@ namespace AoC_2019
             return string.Join(string.Empty, input.Take(8).Select(n => n.ToString()));
         }
 
+        /// <summary>
+        /// Naive, bruteforce implementation using improved applyphase method
+        /// </summary>
+        /// <returns></returns>
         //public override string Solve_2()
         //{
         //    ICollection<int> input = ParseInput().ToList();
@@ -36,41 +40,18 @@ namespace AoC_2019
         //    }
 
         //    const int phasesToApply = 100;
-        //    List<int> rangeSolution = new List<int>();
         //    for (int i = 0; i < phasesToApply; ++i)
         //    {
-        //        rangeSolution = ApplyPhaseForSignalRange(realInput, offset + 1).ToList();
-        //        realInput = realInput.Take(offset).ToList();
-        //        realInput.AddRange(rangeSolution);
+        //        realInput = ApplyPhaseImproved(realInput).ToList();
+        //        Console.Write($"Phase {i + 1} completed!!");
         //    }
 
-        //    return string.Join(string.Empty, rangeSolution.Skip(offset).Take(8).Select(n => n.ToString()));
+        //    return string.Join(string.Empty, realInput.Skip(offset).Take(8).Select(n => n.ToString()));
         //}
 
-        /// <summary>
-        /// Naive, bruteforce implementation using improved applyphase method
-        /// </summary>
-        /// <returns></returns>
         public override string Solve_2()
         {
-            ICollection<int> input = ParseInput().ToList();
-
-            int offset = int.Parse(string.Join(string.Empty, input.Take(7).Select(n => n.ToString())));
-
-            List<int> realInput = new List<int>(10_000 * input.Count);
-            for (int i = 0; i < 10_000; ++i)
-            {
-                realInput.AddRange(input);
-            }
-
-            const int phasesToApply = 100;
-            for (int i = 0; i < phasesToApply; ++i)
-            {
-                realInput = ApplyPhaseImproved(realInput).ToList();
-                Console.Write($"Phase {i + 1} completed!!");
-            }
-
-            return string.Join(string.Empty, realInput.Skip(offset).Take(8).Select(n => n.ToString()));
+            return "";
         }
 
         private IEnumerable<int> ApplyPhase(IEnumerable<int> inputList)

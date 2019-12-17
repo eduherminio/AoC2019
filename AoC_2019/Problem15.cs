@@ -1,6 +1,4 @@
-﻿using AoC_2019.Arcade;
-using AoC_2019.Arcade.Pieces;
-using AoC_2019.IntCode;
+﻿using AoC_2019.IntCode;
 using AoCHelper;
 using FileParser;
 using System.Collections.Generic;
@@ -11,7 +9,6 @@ using MersenneTwister;
 using System;
 using AoCHelper.Model;
 using System.Text;
-using AoC_2019.Extensions;
 
 namespace AoC_2019
 {
@@ -21,9 +18,7 @@ namespace AoC_2019
 
         public override string Solve_1()
         {
-            var input = ParseInput().ToList();
-
-            int result = CalculateFewestCommandsToOxigen(input).Result;
+            int result = CalculateFewestCommandsToOxigen().Result;
 
             return result.ToString();
         }
@@ -50,7 +45,7 @@ namespace AoC_2019
             NoPath = 6
         }
 
-        private static async Task<int> CalculateFewestCommandsToOxigen(List<long> intCode)
+        private async Task<int> CalculateFewestCommandsToOxigen()
         {
             Channel<long> inputChannel = Channel.CreateUnbounded<long>();
             IntCodeComputer computer = new IntCodeComputer(inputChannel);
@@ -64,26 +59,29 @@ namespace AoC_2019
             Point nextPosition = new Point(1, 0);
             inputChannel.Writer.TryWrite(1);
 
-            await foreach (var output in computer.RunIntCodeProgram(intCode))
+            while (map.Values.SingleOrDefault(v => v == Status.Destination) == default)
             {
-                map.TryAdd(nextPosition, (Status)output);
-
-                if ((Status)output == Status.Empty)
+                await foreach (var output in computer.RunIntCodeProgram(ParseInput().ToList()))
                 {
-                    currentPosition = nextPosition;
+                    map.TryAdd(nextPosition, (Status)output);
+
+                    if ((Status)output == Status.Empty || ((Status)output) == Status.Destination)
+                    {
+                        currentPosition = nextPosition;
+                    }
+
+                    int command = ChooseNextPosition(map, currentPosition, out nextPosition);
+
+                    if (map.Values.SingleOrDefault(v => v == Status.Destination) != default && map.Count > 1600)
+                    {
+                        break;
+                    }
+
+                    inputChannel.Writer.TryWrite(command);
                 }
-
-                int command = ChooseNextPosition(map, currentPosition, out nextPosition);
-
-                if (map.Values.SingleOrDefault(v => v == Status.Destination) != default && map.Count > 1000)
-                {
-                    break;
-                }
-
-                inputChannel.Writer.TryWrite(command);
             }
 
-            PrintMap(map);
+            // PrintMap(map);
 
             return CalculateShortestDistance(map);
         }
@@ -116,6 +114,74 @@ namespace AoC_2019
             }
         }
 
+        private static int CalculateShortestDistance(IDictionary<Point, Status> map)
+        {
+            Point origin = map.Single(p => p.Value == Status.Origin).Key;
+            Point destination = map.Single(p => p.Value == Status.Destination).Key;
+
+            ICollection<Point> pathCandidates = map.Where(pair => pair.Value == Status.Empty).Select(p => p.Key).ToList();
+
+            int minPath = int.MaxValue;
+
+            List<Point> optimalPath = new List<Point>();
+            HashSet<Point> noPath = new HashSet<Point>();
+            HashSet<Point> pointsThatLedToDestination = new HashSet<Point>();
+
+            int index = 0;
+            while (minPath == int.MaxValue || index < 250)
+            {
+                Point currentPoint = origin;
+                List<Point> path = new List<Point>();
+
+                bool success = true;
+                while (currentPoint.ManhattanDistance(destination) != 1)
+                {
+                    var candidates = pathCandidates.Where(p =>
+                        p.ManhattanDistance(currentPoint) == 1
+                        && !path.Contains(p)
+                        && !noPath.Contains(p))
+                        .ToList();
+
+                    int nCandidates = candidates.Count;
+
+                    if (nCandidates == 0)
+                    {
+                        success = false;
+                        noPath.Add(currentPoint);
+                        break;
+                    }
+                    else if (nCandidates == 1)
+                    {
+                        path.Add(candidates.First());
+                        currentPoint = candidates.First();
+                    }
+                    else
+                    {
+                        var promisingCandidate = candidates.FirstOrDefault(c => !pointsThatLedToDestination.Contains(c));
+
+                        var chosenCandidate = promisingCandidate ?? candidates[_rnd.Next(0, nCandidates)];
+
+                        path.Add(chosenCandidate);
+                        currentPoint = chosenCandidate;
+                    }
+
+                    // ShowRobotAdventures(map, path, noPath, currentPoint);
+                }
+
+                if (success && path.Count < minPath)
+                {
+                    pointsThatLedToDestination = new HashSet<Point>(path);
+                    optimalPath = path;
+                    minPath = path.Count;
+                    // Console.WriteLine($"New shortest path: {path.Count + 1}");
+                }
+
+                ++index;
+            }
+
+            return minPath + 1;  //   Include destination
+        }
+
         private static void PrintMap(IDictionary<Point, Status> map)
         {
             int minX = map.Keys.Min(p => p.X);
@@ -134,7 +200,7 @@ namespace AoC_2019
                         {
                             Status.Unknown => '?',
                             Status.Empty => ' ',
-                            Status.Destination => '^',
+                            Status.Destination => 'v',
                             Status.Origin => 'O',
                             Status.Wall => '#',
                             Status.Robot => '^',
@@ -157,63 +223,7 @@ namespace AoC_2019
             Console.WriteLine(printedMap);
         }
 
-        private static int CalculateShortestDistance(IDictionary<Point, Status> map)
-        {
-            Point origin = map.Single(p => p.Value == Status.Origin).Key;
-            Point destination = map.Single(p => p.Value == Status.Destination).Key;
-
-            ICollection<Point> pathCandidates = map.Where(pair => pair.Value == Status.Empty).Select(p => p.Key).ToList();
-
-            List<Point> path = new List<Point>();
-            HashSet<Point> noPath = new HashSet<Point>();
-
-            Point previousPoint = new Point(int.MinValue, int.MinValue);
-            Point currentPoint = origin;
-            while (currentPoint.ManhattanDistance(destination) != 1)
-            {
-                var candidates = pathCandidates.Where(p =>
-                    p.ManhattanDistance(currentPoint) == 1
-                    && !path.Contains(p)
-                    && !noPath.Contains(p))
-                    .ToList();
-
-                int nCandidates = candidates.Count;
-
-                if (nCandidates == 0)
-                {
-                    var alternativeCandidates = pathCandidates.Where(p =>
-                    p.ManhattanDistance(currentPoint) == 1
-                    && !noPath.Contains(p))
-                    .ToList();
-
-                    int chosenCandidateIndex = _rnd.Next(0, candidates.Count);
-                    var candidate = alternativeCandidates[chosenCandidateIndex];
-
-                    path.Remove(currentPoint);
-                    noPath.Add(currentPoint);
-                    currentPoint = candidate;
-                }
-                else if (nCandidates == 1)
-                {
-                    path.Add(candidates.First());
-                    previousPoint = currentPoint;
-                    currentPoint = candidates.First();
-                }
-                else
-                {
-                    int chosenCandidateIndex = _rnd.Next(0, candidates.Count);
-                    path.Add(candidates[chosenCandidateIndex]);
-                    previousPoint = currentPoint;
-                    currentPoint = candidates[chosenCandidateIndex];
-                }
-
-                ShowRobotAdventures(map, path, noPath, currentPoint);
-            }
-
-            return path.Count;
-        }
-
-        private static void ShowRobotAdventures(IDictionary<Point, Status> map, List<Point> path, HashSet<Point> noPath, Point currentPoint)
+        private static void ShowRobotAdventures(IDictionary<Point, Status> map, IEnumerable<Point> path, IEnumerable<Point> noPath, Point currentPoint)
         {
             foreach (var p in path)
             {
@@ -232,6 +242,16 @@ namespace AoC_2019
 
             PrintMap(map);
             System.Threading.Thread.Sleep(5);
+
+            foreach (var key in map.Where(pair => pair.Value == Status.InPath).Select(p => p.Key).ToList())
+            {
+                map[key] = Status.Empty;
+            }
+
+            foreach (var key in map.Where(pair => pair.Key.X != 0 && pair.Key.Y != 0 && pair.Value == Status.Robot).Select(p => p.Key).ToList())
+            {
+                map[key] = Status.Empty;
+            }
         }
 
         private IEnumerable<long> ParseInput()

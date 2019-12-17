@@ -43,7 +43,7 @@ Day 11, part 2:
  oooo oo      o ooo  o  o oooo o    o  o
  o  o o o     o o  o oooo o  o o    ooo
  o  o o o  o  o o  o o  o o  o o  o o o
- o  o o  o  oo  ooo  o  o o  o  oo  o  o                                49 ms
+ o  o o  o  oo  ooo  o  o o  o  oo  o  o                49 ms
 
 Day 12, part 1:         7013                            16 ms
 Day 12, part 2:         ????                            ????
@@ -53,3 +53,12 @@ Day 13, part 2:         ????                            ????
 
 Day 14, part 1:         892207                          14 ms
 Day 14, part 2:         1935265                         2,38 s
+
+Day 15, part 1:         374                             74,01 s
+Day 15, part 2:         ????                            ????
+
+Day 16, part 1:         18933364                        1,55 s
+Day 16, part 2:         ????                            ????
+
+Day 17, part 1:         6520                            157 ms
+Day 17, part 2:         ????                            ????

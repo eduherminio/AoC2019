@@ -55,6 +55,15 @@ namespace AoC_2019
 
         public override string Solve_2()
         {
+            //var intCode = ParseInput().ToList();
+            //if (intCode[0] != 1)
+            //{
+            //    throw new SolvingException("Wrong IntCode!");
+            //}
+
+            //intCode[0] = 2;
+
+
             return "";
         }
 
