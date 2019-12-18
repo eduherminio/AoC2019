@@ -14,24 +14,27 @@ namespace AoC_2019
 {
     public class Problem15 : BaseProblem
     {
-        private static readonly Random _rnd = Randoms.Create(RandomType.FastestInt32);
-
         public override string Solve_1()
         {
-            int result = CalculateFewestCommandsToOxigen().Result;
+            var map = ExtractMap(1600).Result;
+
+            // PrintMap(map);
+
+            int result = CalculateShortestDistance(map);
 
             return result.ToString();
         }
 
         public override string Solve_2()
         {
-            return "";
+            var map = ExtractMap(1661).Result;
+
+            int time = SpreadOxygen(map);
+
+            return time.ToString();
         }
 
-        private static int GenerateRandomInput()
-        {
-            return _rnd.Next(0, 5);
-        }
+        private static readonly Random _rnd = Randoms.Create(RandomType.FastestInt32);
 
         private enum Status
         {
@@ -45,7 +48,7 @@ namespace AoC_2019
             NoPath = 6
         }
 
-        private async Task<int> CalculateFewestCommandsToOxigen()
+        private async Task<IDictionary<Point, Status>> ExtractMap(int itemsInMap)
         {
             Channel<long> inputChannel = Channel.CreateUnbounded<long>();
             IntCodeComputer computer = new IntCodeComputer(inputChannel);
@@ -72,7 +75,7 @@ namespace AoC_2019
 
                     int command = ChooseNextPosition(map, currentPosition, out nextPosition);
 
-                    if (map.Values.SingleOrDefault(v => v == Status.Destination) != default && map.Count > 1600)
+                    if (map.Values.SingleOrDefault(v => v == Status.Destination) != default && map.Count >= itemsInMap)
                     {
                         break;
                     }
@@ -81,37 +84,7 @@ namespace AoC_2019
                 }
             }
 
-            // PrintMap(map);
-
-            return CalculateShortestDistance(map);
-        }
-
-        private static int ChooseNextPosition(IDictionary<Point, Status> map, Point currentPosition, out Point nextPosition)
-        {
-            const int maxAttempts = 25;
-            int attempts = 0;
-
-            while (true)
-            {
-                int command = _rnd.Next(1, 5);
-                nextPosition = command switch
-                {
-                    1 => new Point(currentPosition.X, currentPosition.Y + 1),
-                    2 => new Point(currentPosition.X, currentPosition.Y - 1),
-                    3 => new Point(currentPosition.X - 1, currentPosition.Y),
-                    4 => new Point(currentPosition.X + 1, currentPosition.Y),
-                    _ => throw new SolvingException("Learn to use pseudo-random generator lib")
-                };
-
-                if (!map.ContainsKey(nextPosition)
-                || (attempts > maxAttempts
-                    && Math.Abs(nextPosition.X) < 100
-                    && Math.Abs(nextPosition.Y) < 100))
-                {
-                    return command;
-                }
-                ++attempts;
-            }
+            return map;
         }
 
         private static int CalculateShortestDistance(IDictionary<Point, Status> map)
@@ -123,7 +96,6 @@ namespace AoC_2019
 
             int minPath = int.MaxValue;
 
-            List<Point> optimalPath = new List<Point>();
             HashSet<Point> noPath = new HashSet<Point>();
             HashSet<Point> pointsThatLedToDestination = new HashSet<Point>();
 
@@ -171,7 +143,6 @@ namespace AoC_2019
                 if (success && path.Count < minPath)
                 {
                     pointsThatLedToDestination = new HashSet<Point>(path);
-                    optimalPath = path;
                     minPath = path.Count;
                     // Console.WriteLine($"New shortest path: {path.Count + 1}");
                 }
@@ -180,6 +151,71 @@ namespace AoC_2019
             }
 
             return minPath + 1;  //   Include destination
+        }
+
+        private static int ChooseNextPosition(IDictionary<Point, Status> map, Point currentPosition, out Point nextPosition)
+        {
+            const int maxAttempts = 25;
+            int attempts = 0;
+
+            while (true)
+            {
+                int command = _rnd.Next(1, 5);
+                nextPosition = command switch
+                {
+                    1 => new Point(currentPosition.X, currentPosition.Y + 1),
+                    2 => new Point(currentPosition.X, currentPosition.Y - 1),
+                    3 => new Point(currentPosition.X - 1, currentPosition.Y),
+                    4 => new Point(currentPosition.X + 1, currentPosition.Y),
+                    _ => throw new SolvingException("Learn to use pseudo-random generator lib")
+                };
+
+                if (!map.ContainsKey(nextPosition)
+                || (attempts > maxAttempts
+                    && Math.Abs(nextPosition.X) < 100
+                    && Math.Abs(nextPosition.Y) < 100))
+                {
+                    return command;
+                }
+                ++attempts;
+            }
+        }
+
+        private static int SpreadOxygen(IDictionary<Point, Status> map)
+        {
+            var emptyLocations = map
+                .Where(p => p.Value == Status.Empty || p.Value == Status.Origin)
+                .Select(pair => pair.Key)
+                .ToList();
+
+            foreach (Point key in emptyLocations)
+            {
+                map[key] = Status.Empty;
+            }
+
+            HashSet<Point> areaWithOxygen = new HashSet<Point> { map.Single(p => p.Value == Status.Destination).Key };
+
+            int time = 0;
+            while (areaWithOxygen.Count < emptyLocations.Count)
+            {
+                var pointsToBeOxygenated = emptyLocations
+                    .Except(areaWithOxygen)
+                    .Where(emptyLocation =>
+                            areaWithOxygen.Any(pointWithO => pointWithO.ManhattanDistance(emptyLocation) == 1))
+                    .ToList();
+
+                foreach (var point in pointsToBeOxygenated)
+                {
+                    areaWithOxygen.Add(point);
+                    map[point] = Status.InPath;
+                }
+
+                //PrintMap(map);
+                //System.Threading.Thread.Sleep(5);
+                ++time;
+            }
+
+            return time + 1;
         }
 
         private static void PrintMap(IDictionary<Point, Status> map)

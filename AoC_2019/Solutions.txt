@@ -55,7 +55,7 @@ Day 14, part 1:         892207                          14 ms
 Day 14, part 2:         1935265                         2,38 s
 
 Day 15, part 1:         374                             74,01 s
-Day 15, part 2:         ????                            ????
+Day 15, part 2:         482                             114,33 s
 
 Day 16, part 1:         18933364                        1,55 s
 Day 16, part 2:         ????                            ????
