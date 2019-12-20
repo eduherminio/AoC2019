@@ -1,10 +1,11 @@
-﻿using AoC_2019.IntCode;
+﻿using System;
+using AoC_2019.IntCode;
 using AoC_2019.Model;
+using Point = AoCHelper.Model.Point;
 using AoCHelper;
 using FileParser;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -29,11 +30,13 @@ namespace AoC_2019
 
         public override string Solve_2()
         {
-            var intCode = ParseInput().ToList();
+            const int squareSideSize = 100;
 
-            var output = IntCodeHelpers.RunIntCodeProgram(intCode, 2).Result;
+            var point = ScanSeekingSquare(squareSideSize);
 
-            return output.Single().ToString();
+            long result = 10_000 * point.X + point.Y;
+
+            return result.ToString();
         }
 
         private IEnumerable<PointWithId> ScanUniverse(int xMax, int yMax)
@@ -42,12 +45,12 @@ namespace AoC_2019
             {
                 for (int x = 0; x < xMax; ++x)
                 {
-                    yield return ScanPoint(x, y).Result;
+                    yield return new PointWithId(ScanPoint(x, y).Result.ToString(), x, y);
                 }
             }
         }
 
-        private async Task<PointWithId> ScanPoint(int x, int y)
+        private async Task<long> ScanPoint(int x, int y)
         {
             var inputChannel = Channel.CreateUnbounded<long>();
             var computer = new IntCodeComputer(inputChannel);
@@ -57,7 +60,7 @@ namespace AoC_2019
 
             var output = await computer.RunIntCodeProgram(ParseInput().ToList()).ToListAsync();
 
-            return new PointWithId(output.Single().ToString(), x, y);
+            return output.Single();
         }
 
         private static void PrintMap(HashSet<PointWithId> map)
@@ -72,9 +75,80 @@ namespace AoC_2019
                         sb.Append(actualPoint.Id);
                     }
                 }
+
+                sb.Append(Environment.NewLine);
             }
+
+            Console.WriteLine(sb.ToString());
         }
 
+        private Point ScanSeekingSquare(int side)
+        {
+            --side;
+            int lastOnePosition = 0;
+            for (int y = 10; ; ++y)
+            {
+                //if (y % 10 == 0) Console.WriteLine(y);
+
+                bool firstOneDetected = false;
+                long previousHorizontalScanResult = 0;
+                for (int x = lastOnePosition; ; ++x)
+                {
+                    var bottomLeft = ScanPoint(x, y).Result;
+
+                    if (bottomLeft == 1)
+                    {
+                        previousHorizontalScanResult = bottomLeft;
+
+                        if (!firstOneDetected)
+                        {
+                            firstOneDetected = true;
+                            lastOnePosition = x;
+                        }
+
+                        var bottomRight = ScanPoint(x + side, y).Result;
+                        if (bottomRight != 1)
+                            continue;
+
+                        var topLeft = ScanPoint(x, y - side).Result;
+                        if (topLeft != 1)
+                            continue;
+
+                        var topRight = ScanPoint(x + side, y - side).Result;
+
+                        if (y >= side && x >= side
+                            && bottomRight == 1
+                            && topLeft == 1
+                            && topRight == 1)
+                        {
+                            for (int _x = x; _x <= x + side; ++_x)
+                            {
+                                for (int _y = y; _y >= y - side; --_y)
+                                {
+                                    if (ScanPoint(_x, _y).Result == 0)
+                                    {
+                                        goto error;
+                                    }
+                                }
+                            }
+
+                            return new Point(x, y - side);
+                            error:
+                            ;
+                        }
+                    }
+                    else
+                    {
+                        if (previousHorizontalScanResult == 1)
+                        {
+                            break;
+                        }
+                    }
+
+                    previousHorizontalScanResult = bottomLeft;
+                }
+            }
+        }
 
         private IEnumerable<long> ParseInput()
         {

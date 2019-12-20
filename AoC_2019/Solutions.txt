@@ -62,3 +62,9 @@ Day 16, part 2:         ????                            ????
 
 Day 17, part 1:         6520                            157 ms
 Day 17, part 2:         ????                            ????
+
+Day 18, part 1:         ????                            ????
+Day 18, part 2:         ????                            ????
+
+Day 19, part 1:         206                             4,54 s
+Day 19, part 2:         6190948                         359,94 s
