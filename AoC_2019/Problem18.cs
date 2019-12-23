@@ -18,11 +18,12 @@ namespace AoC_2019
 
             EvaluateAlgorithmPerformance(BreathFirstAlgorithmPureStoringPaths, pathOptions);
             EvaluateAlgorithmPerformance(BreathFirstAlgorithmOptimizedStoringPaths, pathOptions);
+            EvaluateAlgorithmPerformance(BreathFirstAlgorithmOptimizedStoringNodes, pathOptions);
             EvaluateAlgorithmPerformance(DepthFirstAlgorithmPureStoringPaths, pathOptions);
             EvaluateAlgorithmPerformance(DepthFirstAlgorithmOptimizedStoringPaths, pathOptions);
-            //EvaluateAlgorithmPerformance(AStarAlgorithmStoringPaths, pathOptions);
-            EvaluateAlgorithmPerformance(BreathFirstAlgorithmOptimizedStoringNodes, pathOptions);
             EvaluateAlgorithmPerformance(DepthFirstAlgorithmOptimizedStoringNodes, pathOptions);
+            EvaluateAlgorithmPerformance(AStarAlgorithmStoringPaths, pathOptions);
+            EvaluateAlgorithmPerformance(AStarAlgorithmStoringNodes, pathOptions);
 
             int result = BreathFirstAlgorithmOptimizedStoringNodes(pathOptions);
 
@@ -444,7 +445,7 @@ namespace AoC_2019
                     {
                         costFromStart[pathIncludingCandidate] = newScoreForCandidate;
 
-                        var totalCost = costFromStart[currentPath] + EstimateCost(pathIncludingCandidate, keysToCollect);
+                        var totalCost = newScoreForCandidate + EstimateCost(pathIncludingCandidate, keysToCollect);
 
                         paths.AddOrUpdatePriority(pathIncludingCandidate, totalCost);
 
@@ -456,9 +457,88 @@ namespace AoC_2019
             throw new SolvingException($"{GetCurrentMethod()} wasn't able to find a solution");
         }
 
+        private static int AStarAlgorithmStoringNodes(List<LocationPoint> emptyLocations)
+        {
+            int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
+            Moment initialNode = new Moment(startPoint, new HashSet<string>(), new HashSet<string>());
+
+            SimplePriorityQueue<Moment, double> paths = new SimplePriorityQueue<Moment, double>();
+            paths.Enqueue(initialNode, priority: keysToCollect);
+
+            Dictionary<Moment, int> costFromStart = new Dictionary<Moment, int>
+            {
+                [initialNode] = 0
+            };
+
+            HashSet<Moment> pathsToExpand = new HashSet<Moment>()
+            {
+                initialNode
+            };
+
+            int stepCounter = 0;
+            while (pathsToExpand.Any())
+            {
+                Moment currentMoment = paths.First(p => pathsToExpand.Contains(p));
+
+                TrackProgress(keysToCollect, currentMoment, ref stepCounter);
+
+                pathsToExpand.Remove(currentMoment);
+
+                if (currentMoment.Keys.Count == keysToCollect)
+                {
+                    Moment solution = currentMoment;
+                    List<Moment> solutionPath = new List<Moment>();
+
+                    while (solution != null)
+                    {
+                        solutionPath.Add(solution);
+                        solution = solution.Parent;
+                    }
+
+                    Console.WriteLine($"{GetCurrentMethod()}: {solutionPath.Count - 2} in {stepCounter}");
+
+                    return solutionPath.Count - 2;
+                }
+
+                if (currentMoment.Point.ContentType == ContentType.Key)
+                {
+                    currentMoment.Keys.Add(currentMoment.Point.Content);
+                }
+
+                var nextPointCandidates = emptyLocations
+                    .Where(MovementCandidateCondition(currentMoment))
+                    .ToList();
+
+                foreach (var candidate in nextPointCandidates)
+                {
+                    var newMoment = new Moment(candidate, currentMoment.Keys, currentMoment.Doors, currentMoment);
+                    int newScoreForCandidate = costFromStart[currentMoment] + 1;
+
+                    if (!costFromStart.TryGetValue(newMoment, out int cost) || newScoreForCandidate < cost)
+                    {
+                        costFromStart[newMoment] = newScoreForCandidate;
+
+                        var totalCost = newScoreForCandidate + EstimateCost(newMoment, keysToCollect);
+
+                        paths.AddOrUpdatePriority(newMoment, totalCost);
+
+                        pathsToExpand.Add(newMoment);
+                    }
+                }
+            }
+
+            throw new SolvingException($"{GetCurrentMethod()} wasn't able to find a solution");
+        }
+
         private static int EstimateCost(Path pathIncludingCandidate, int keysToCollect)
         {
             return keysToCollect - pathIncludingCandidate.Moments.Last().Keys.Count;
+        }
+
+        private static int EstimateCost(Moment moment, int keysToCollect)
+        {
+            return keysToCollect - moment.Keys.Count;
         }
 
         private static Func<LocationPoint, bool> MovementCandidateCondition(Moment currentMoment, Path currentPath)
