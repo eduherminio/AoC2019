@@ -3,7 +3,6 @@ using AoCHelper;
 using FileParser;
 using System.Collections.Generic;
 using System.Linq;
-using MersenneTwister;
 
 namespace AoC_2019
 {
@@ -12,8 +11,12 @@ namespace AoC_2019
         public override string Solve_1()
         {
             var input = ParseInput().ToList();
+            var pathOptions = input.Where(p => p.ContentType != ContentType.Wall).ToList();
 
-            int result = DepthFirstAlgorithm(input.Where(p => p.ContentType != ContentType.Wall).ToList());
+            int result2 = BreathFirstAlgorithm(pathOptions);
+            int result = DepthFirstAlgorithm(pathOptions);
+
+            Console.WriteLine($"{result}|{result2}");
 
             return result.ToString();
         }
@@ -28,29 +31,24 @@ namespace AoC_2019
         private static int DepthFirstAlgorithm(List<LocationPoint> emptyLocations)
         {
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
 
             List<Path> solutions = new List<Path>();
-            Queue<Path> paths = new Queue<Path>();
 
-            var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
-            paths.Enqueue(new Path(new Moment(startPoint, new HashSet<string>(), new HashSet<string>())));
+            Stack<Path> paths = new Stack<Path>();
+            paths.Push(new Path(new Moment(startPoint, new HashSet<string>(), new HashSet<string>())));
 
             int stepCounter = 0;
             while (paths.Any())
             {
-                ++stepCounter;
-                if (stepCounter % 100 == 0)
-                {
-                    Console.WriteLine($"{paths.Max(p => p.Moments.Last().Keys.Count)}/{keysToCollect}");
-                }
+                stepCounter = TrackProgress(keysToCollect, paths, stepCounter);
 
-                Path currentPath = paths.First();
+                Path currentPath = paths.Pop();
                 Moment currentMoment = currentPath.Moments.Last();
 
                 if (currentMoment.Keys.Count == keysToCollect)
                 {
                     solutions.Add(currentPath);
-                    paths.Dequeue();
                     continue;
                 }
 
@@ -63,18 +61,51 @@ namespace AoC_2019
                     .Where(MovementCandidateCondition(currentMoment, currentPath))
                     .ToList();
 
-                if (nextPointCandidates.Any())
+                foreach (var candidate in nextPointCandidates)
                 {
-                    foreach (var candidate in nextPointCandidates.Skip(1))
-                    {
-                        paths.Enqueue(new Path(currentPath, new Moment(candidate, currentMoment.Keys, currentMoment.Doors)));
-                    }
-
-                    currentPath.Moments.Add(new Moment(nextPointCandidates.First(), currentMoment.Keys, currentMoment.Doors));
+                    paths.Push(new Path(currentPath, new Moment(candidate, currentMoment.Keys, currentMoment.Doors)));
                 }
-                else
+            }
+
+            return solutions.Min(p => p.Moments.Count) - 2;
+        }
+
+        private static int BreathFirstAlgorithm(List<LocationPoint> emptyLocations)
+        {
+            int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
+
+            List<Path> solutions = new List<Path>();
+
+            Queue<Path> paths = new Queue<Path>();
+            paths.Enqueue(new Path(new Moment(startPoint, new HashSet<string>(), new HashSet<string>())));
+
+            int stepCounter = 0;
+            while (paths.Any())
+            {
+                stepCounter = TrackProgress(keysToCollect, paths, stepCounter);
+
+                Path currentPath = paths.Dequeue();
+                Moment currentMoment = currentPath.Moments.Last();
+
+                if (currentMoment.Keys.Count == keysToCollect)
                 {
-                    paths.Dequeue();
+                    solutions.Add(currentPath);
+                    continue;
+                }
+
+                if (currentMoment.Point.ContentType == ContentType.Key)
+                {
+                    currentMoment.Keys.Add(currentMoment.Point.Content);
+                }
+
+                var nextPointCandidates = emptyLocations
+                    .Where(MovementCandidateCondition(currentMoment, currentPath))
+                    .ToList();
+
+                foreach (var candidate in nextPointCandidates)
+                {
+                    paths.Enqueue(new Path(currentPath, new Moment(candidate, currentMoment.Keys, currentMoment.Doors)));
                 }
             }
 
@@ -88,6 +119,17 @@ namespace AoC_2019
                 && (p.ContentType != ContentType.Door || currentMoment.Keys.Contains(p.Content.ToLower()))
                 && (currentPath.Moments.Count < 2
                     || !currentPath.Moments[currentPath.Moments.Count - 2].Equals(new Moment(p, currentMoment.Keys, currentMoment.Doors)));
+        }
+
+        private static int TrackProgress(int keysToCollect, IEnumerable<Path> paths, int stepCounter)
+        {
+            ++stepCounter;
+            if (stepCounter % 1000 == 0)
+            {
+                Console.WriteLine($"{paths.Max(p => p.Moments.Last().Keys.Count)}/{keysToCollect}");
+            }
+
+            return stepCounter;
         }
 
         private IEnumerable<LocationPoint> ParseInput()
