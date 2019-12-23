@@ -533,12 +533,18 @@ namespace AoC_2019
 
         private static int EstimateCost(Path pathIncludingCandidate, int keysToCollect)
         {
-            return keysToCollect - pathIncludingCandidate.Moments.Last().Keys.Count;
+            return EstimateCost(pathIncludingCandidate.Moments.Last(), keysToCollect);
         }
 
         private static int EstimateCost(Moment moment, int keysToCollect)
         {
-            return keysToCollect - moment.Keys.Count;
+            int newKeysFound = 0;
+            if (moment.Point.ContentType == ContentType.Key && !moment.Keys.Contains(moment.Point.Content))
+            {
+                newKeysFound = 1;
+            }
+
+            return keysToCollect - moment.Keys.Count - newKeysFound;
         }
 
         private static Func<LocationPoint, bool> MovementCandidateCondition(Moment currentMoment, Path currentPath)
