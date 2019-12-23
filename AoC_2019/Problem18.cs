@@ -13,10 +13,9 @@ namespace AoC_2019
             var input = ParseInput().ToList();
             var pathOptions = input.Where(p => p.ContentType != ContentType.Wall).ToList();
 
-            int result2 = BreathFirstAlgorithm(pathOptions);
-            int result = DepthFirstAlgorithm(pathOptions);
-
-            Console.WriteLine($"{result}|{result2}");
+            int result = DepthFirstAlgorithmEnhancedForOptimizationProblems(pathOptions);
+            BreathFirstAlgorithm(pathOptions);
+            DepthFirstAlgorithm(pathOptions);
 
             return result.ToString();
         }
@@ -33,7 +32,7 @@ namespace AoC_2019
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
 
-            List<Path> solutions = new List<Path>();
+            Path solution = null;
 
             Stack<Path> paths = new Stack<Path>();
             paths.Push(new Path(new Moment(startPoint, new HashSet<string>(), new HashSet<string>())));
@@ -41,14 +40,17 @@ namespace AoC_2019
             int stepCounter = 0;
             while (paths.Any())
             {
-                stepCounter = TrackProgress(keysToCollect, paths, stepCounter);
+                TrackProgress(keysToCollect, paths, ref stepCounter);
 
                 Path currentPath = paths.Pop();
                 Moment currentMoment = currentPath.Moments.Last();
 
                 if (currentMoment.Keys.Count == keysToCollect)
                 {
-                    solutions.Add(currentPath);
+                    if (!(currentPath.Moments.Count > solution?.Moments?.Count))
+                    {
+                        solution = currentPath;
+                    }
                     continue;
                 }
 
@@ -67,7 +69,14 @@ namespace AoC_2019
                 }
             }
 
-            return solutions.Min(p => p.Moments.Count) - 2;
+            if (solution == null)
+            {
+                throw new SolvingException($"{GetCurrentMethod()} wasn't able to find a solution");
+            }
+
+            Console.WriteLine($"{GetCurrentMethod()}: {solution.Moments.Count - 2} in {stepCounter}");
+
+            return solution.Moments.Count - 2;
         }
 
         private static int BreathFirstAlgorithm(List<LocationPoint> emptyLocations)
@@ -75,7 +84,7 @@ namespace AoC_2019
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
 
-            List<Path> solutions = new List<Path>();
+            Path solution = null;
 
             Queue<Path> paths = new Queue<Path>();
             paths.Enqueue(new Path(new Moment(startPoint, new HashSet<string>(), new HashSet<string>())));
@@ -83,14 +92,17 @@ namespace AoC_2019
             int stepCounter = 0;
             while (paths.Any())
             {
-                stepCounter = TrackProgress(keysToCollect, paths, stepCounter);
+                TrackProgress(keysToCollect, paths, ref stepCounter);
 
                 Path currentPath = paths.Dequeue();
                 Moment currentMoment = currentPath.Moments.Last();
 
                 if (currentMoment.Keys.Count == keysToCollect)
                 {
-                    solutions.Add(currentPath);
+                    if (!(currentPath.Moments.Count > solution?.Moments?.Count))
+                    {
+                        solution = currentPath;
+                    }
                     continue;
                 }
 
@@ -109,7 +121,72 @@ namespace AoC_2019
                 }
             }
 
-            return solutions.Min(p => p.Moments.Count) - 2;
+            if (solution == null)
+            {
+                throw new SolvingException($"{GetCurrentMethod()} wasn't able to find a solution");
+            }
+
+            Console.WriteLine($"{GetCurrentMethod()}: {solution.Moments.Count - 2} in {stepCounter}");
+
+            return solution.Moments.Count - 2;
+        }
+
+        private static int DepthFirstAlgorithmEnhancedForOptimizationProblems(List<LocationPoint> emptyLocations)
+        {
+            int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
+
+            Path solution = null;
+
+            Stack<Path> paths = new Stack<Path>();
+            paths.Push(new Path(new Moment(startPoint, new HashSet<string>(), new HashSet<string>())));
+
+            int stepCounter = 0;
+            while (paths.Any())
+            {
+                TrackProgress(keysToCollect, paths, ref stepCounter);
+
+                Path currentPath = paths.Pop();
+
+                if (currentPath.Moments.Count > solution?.Moments?.Count)
+                {
+                    continue;
+                }
+
+                Moment currentMoment = currentPath.Moments.Last();
+
+                if (currentMoment.Keys.Count == keysToCollect)
+                {
+                    if (!(currentPath.Moments.Count > solution?.Moments?.Count))
+                    {
+                        solution = currentPath;
+                    }
+                    continue;
+                }
+
+                if (currentMoment.Point.ContentType == ContentType.Key)
+                {
+                    currentMoment.Keys.Add(currentMoment.Point.Content);
+                }
+
+                var nextPointCandidates = emptyLocations
+                    .Where(MovementCandidateCondition(currentMoment, currentPath))
+                    .ToList();
+
+                foreach (var candidate in nextPointCandidates)
+                {
+                    paths.Push(new Path(currentPath, new Moment(candidate, currentMoment.Keys, currentMoment.Doors)));
+                }
+            }
+
+            if (solution == null)
+            {
+                throw new SolvingException($"{GetCurrentMethod()} wasn't able to find a solution");
+            }
+
+            Console.WriteLine($"{GetCurrentMethod()}: {solution.Moments.Count - 2} in {stepCounter}");
+
+            return solution.Moments.Count - 2;
         }
 
         private static Func<LocationPoint, bool> MovementCandidateCondition(Moment currentMoment, Path currentPath)
@@ -121,15 +198,22 @@ namespace AoC_2019
                     || !currentPath.Moments[currentPath.Moments.Count - 2].Equals(new Moment(p, currentMoment.Keys, currentMoment.Doors)));
         }
 
-        private static int TrackProgress(int keysToCollect, IEnumerable<Path> paths, int stepCounter)
+        private static void TrackProgress(int keysToCollect, IEnumerable<Path> paths, ref int stepCounter)
         {
             ++stepCounter;
-            if (stepCounter % 1000 == 0)
+            if (stepCounter % 10000 == 0)
             {
-                Console.WriteLine($"{paths.Max(p => p.Moments.Last().Keys.Count)}/{keysToCollect}");
+                Console.WriteLine($"{paths.Max(p => p.Moments.Last().Keys.Count)}/{keysToCollect} at step {stepCounter}");
             }
+        }
 
-            return stepCounter;
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static string GetCurrentMethod()
+        {
+            var st = new System.Diagnostics.StackTrace();
+            var sf = st.GetFrame(1);
+
+            return sf.GetMethod().Name;
         }
 
         private IEnumerable<LocationPoint> ParseInput()
@@ -278,18 +362,6 @@ namespace AoC_2019
         /// <param name="moment"></param>
         public Path(Path path, Moment moment)
         {
-            //Moments = new List<Moment>();
-
-            //foreach (Moment m in path.Moments)
-            //{
-            //    Moments.Add(new Moment(
-            //        m.Point,
-            //        ((string[])m.Keys.ToArray().Clone()).ToHashSet(),
-            //        ((string[])m.Doors.ToArray().Clone()).ToHashSet()));
-            //}
-
-            //Moments.Add(moment);
-
             Moments = new List<Moment>(path.Moments)
             {
                 moment
