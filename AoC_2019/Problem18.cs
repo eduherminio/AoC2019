@@ -40,12 +40,14 @@ namespace AoC_2019
         private static int DepthFirstAlgorithmPureStoringPaths(List<LocationPoint> emptyLocations)
         {
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            int existingDoors = emptyLocations.Count(p => p.ContentType == ContentType.Door);
+
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
 
             Path solution = null;
 
             Stack<Path> paths = new Stack<Path>();
-            paths.Push(new Path(new Moment(startPoint, new HashSet<string>(), new HashSet<string>())));
+            paths.Push(new Path(new Moment(startPoint, new HashSet<char>(keysToCollect), new HashSet<char>(existingDoors))));
 
             int stepCounter = 0;
             while (paths.Any())
@@ -92,12 +94,14 @@ namespace AoC_2019
         private static int DepthFirstAlgorithmOptimizedStoringPaths(List<LocationPoint> emptyLocations)
         {
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            int existingDoors = emptyLocations.Count(p => p.ContentType == ContentType.Door);
+
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
 
             Path solution = null;
 
             Stack<Path> paths = new Stack<Path>();
-            paths.Push(new Path(new Moment(startPoint, new HashSet<string>(), new HashSet<string>())));
+            paths.Push(new Path(new Moment(startPoint, new HashSet<char>(keysToCollect), new HashSet<char>(existingDoors))));
 
             int stepCounter = 0;
             while (paths.Any())
@@ -152,12 +156,14 @@ namespace AoC_2019
             var contiguousPoints = GenerateContiguousPointsDictionary(emptyLocations);
 
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            int existingDoors = emptyLocations.Count(p => p.ContentType == ContentType.Door);
+
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
 
             Moment solution = null;
 
             Stack<Moment> path = new Stack<Moment>();
-            path.Push(new Moment(startPoint, new HashSet<string>(), new HashSet<string>()));
+            path.Push(new Moment(startPoint, new HashSet<char>(keysToCollect), new HashSet<char>(existingDoors)));
 
             int stepCounter = 0;
             while (path.Any())
@@ -215,12 +221,14 @@ namespace AoC_2019
         private static int BreathFirstAlgorithmPureStoringPaths(List<LocationPoint> emptyLocations)
         {
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            int existingDoors = emptyLocations.Count(p => p.ContentType == ContentType.Door);
+
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
 
             Path solution = null;
 
             Queue<Path> paths = new Queue<Path>();
-            paths.Enqueue(new Path(new Moment(startPoint, new HashSet<string>(), new HashSet<string>())));
+            paths.Enqueue(new Path(new Moment(startPoint, new HashSet<char>(keysToCollect), new HashSet<char>(existingDoors))));
 
             int stepCounter = 0;
             while (paths.Any())
@@ -267,12 +275,14 @@ namespace AoC_2019
         private static int BreathFirstAlgorithmOptimizedStoringPaths(List<LocationPoint> emptyLocations)
         {
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            int existingDoors = emptyLocations.Count(p => p.ContentType == ContentType.Door);
+
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
 
             Path solution = null;
 
             Queue<Path> paths = new Queue<Path>();
-            paths.Enqueue(new Path(new Moment(startPoint, new HashSet<string>(), new HashSet<string>())));
+            paths.Enqueue(new Path(new Moment(startPoint, new HashSet<char>(keysToCollect), new HashSet<char>(existingDoors))));
 
             int stepCounter = 0;
             while (paths.Any())
@@ -327,12 +337,14 @@ namespace AoC_2019
             var contiguousPoints = GenerateContiguousPointsDictionary(emptyLocations);
 
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            int existingDoors = emptyLocations.Count(p => p.ContentType == ContentType.Door);
+
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
 
             Moment solution = null;
 
             Queue<Moment> path = new Queue<Moment>();
-            path.Enqueue(new Moment(startPoint, new HashSet<string>(), new HashSet<string>()));
+            path.Enqueue(new Moment(startPoint, new HashSet<char>(keysToCollect), new HashSet<char>(existingDoors)));
 
             int stepCounter = 0;
             while (path.Any())
@@ -395,8 +407,10 @@ namespace AoC_2019
         private static int AStarAlgorithmStoringPaths(List<LocationPoint> emptyLocations)
         {
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            int existingDoors = emptyLocations.Count(p => p.ContentType == ContentType.Door);
+
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
-            Path initialPath = new Path(new Moment(startPoint, new HashSet<string>(), new HashSet<string>()));
+            Path initialPath = new Path(new Moment(startPoint, new HashSet<char>(keysToCollect), new HashSet<char>(existingDoors)));
 
             SimplePriorityQueue<Path, double> paths = new SimplePriorityQueue<Path, double>();
             paths.Enqueue(initialPath, priority: keysToCollect);
@@ -466,8 +480,10 @@ namespace AoC_2019
             var contiguousPoints = GenerateContiguousPointsDictionary(emptyLocations);
 
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            int existingDoors = emptyLocations.Count(p => p.ContentType == ContentType.Door);
+
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
-            Moment initialNode = new Moment(startPoint, new HashSet<string>(), new HashSet<string>());
+            Moment initialNode = new Moment(startPoint, new HashSet<char>(keysToCollect), new HashSet<char>(existingDoors));
 
             SimplePriorityQueue<Moment, double> paths = new SimplePriorityQueue<Moment, double>();
             paths.Enqueue(initialNode, priority: keysToCollect);
@@ -477,19 +493,19 @@ namespace AoC_2019
                 [initialNode] = 0
             };
 
-            HashSet<Moment> pathsToExpand = new HashSet<Moment>()
+            HashSet<Moment> momentsToExpand = new HashSet<Moment>()
             {
                 initialNode
             };
 
             int stepCounter = 0;
-            while (pathsToExpand.Any())
+            while (momentsToExpand.Any())
             {
                 Moment currentMoment = paths.Dequeue();
 
                 TrackProgress(keysToCollect, currentMoment, ref stepCounter);
 
-                pathsToExpand.Remove(currentMoment);
+                momentsToExpand.Remove(currentMoment);
 
                 if (currentMoment.Keys.Count == keysToCollect)
                 {
@@ -529,7 +545,7 @@ namespace AoC_2019
 
                         paths.AddOrUpdatePriority(newMoment, totalCost);
 
-                        pathsToExpand.Add(newMoment);
+                        momentsToExpand.Add(newMoment);
                     }
                 }
             }
@@ -573,7 +589,7 @@ namespace AoC_2019
         {
             return p =>
                 currentMoment.Point.ManhattanDistance(p) == 1
-                && (p.ContentType != ContentType.Door || currentMoment.Keys.Contains(p.Content.ToLower()))
+                && (p.ContentType != ContentType.Door || currentMoment.Keys.Contains(Char.ToLower(p.Content)))
                 && (currentPath.Moments.Count < 2
                     || !currentPath.Moments[currentPath.Moments.Count - 2].Equals(new Moment(p, currentMoment.Keys, currentMoment.Doors)));
         }
@@ -581,7 +597,7 @@ namespace AoC_2019
         private static Func<LocationPoint, bool> MovementCandidateCondition(Moment currentMoment)
         {
             return p =>
-            (p.ContentType != ContentType.Door || currentMoment.Keys.Contains(p.Content.ToLower()))
+            (p.ContentType != ContentType.Door || currentMoment.Keys.Contains(Char.ToLower(p.Content)))
                 && (currentMoment.Parent?.Equals(new Moment(p, currentMoment.Keys, currentMoment.Doors)) != true);
         }
 
@@ -661,7 +677,7 @@ namespace AoC_2019
                             : ContentType.Key;
                     }
 
-                    yield return new LocationPoint(counter.ToString(), x, y, ch.ToString(), contentType);
+                    yield return new LocationPoint(counter.ToString(), x, y, ch, contentType);
                     ++counter;
                     ++x;
                 }
@@ -682,11 +698,11 @@ namespace AoC_2019
 
     public class LocationPoint : Model.PointWithId
     {
-        public string Content { get; }
+        public char Content { get; }
 
         public ContentType ContentType { get; }
 
-        public LocationPoint(string id, int x, int y, string content, ContentType contentType) : base(id, x, y)
+        public LocationPoint(string id, int x, int y, char content, ContentType contentType) : base(id, x, y)
         {
             Content = content;
             ContentType = contentType;
@@ -697,20 +713,20 @@ namespace AoC_2019
     {
         public LocationPoint Point { get; }
 
-        public HashSet<string> Keys { get; }
+        public HashSet<char> Keys { get; }
 
-        public HashSet<string> Doors { get; }
+        public HashSet<char> Doors { get; }
 
         public Moment Parent { get; set; }
 
         public int StepsFromOrigin { get; set; }
 
-        public Moment(LocationPoint point, HashSet<string> keys, HashSet<string> doors)
+        public Moment(LocationPoint point, HashSet<char> keys, HashSet<char> doors)
             : this(point, keys, doors, null)
         {
         }
 
-        public Moment(LocationPoint point, HashSet<string> keys, HashSet<string> doors, Moment parent)
+        public Moment(LocationPoint point, HashSet<char> keys, HashSet<char> doors, Moment parent)
         {
             Point = point;
             Keys = keys.ToHashSet();
