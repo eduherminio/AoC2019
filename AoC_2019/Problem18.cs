@@ -3,6 +3,7 @@ using AoCHelper;
 using FileParser;
 using System.Collections.Generic;
 using System.Linq;
+using Priority_Queue;
 
 namespace AoC_2019
 {
@@ -13,7 +14,9 @@ namespace AoC_2019
             var input = ParseInput().ToList();
             var pathOptions = input.Where(p => p.ContentType != ContentType.Wall).ToList();
 
-            int result = DepthFirstAlgorithmEnhancedForOptimizationProblems(pathOptions);
+            int result = AStarAlgorithm(pathOptions);
+
+            DepthFirstAlgorithmEnhancedForOptimizationProblems(pathOptions);
             BreathFirstAlgorithm(pathOptions);
             DepthFirstAlgorithm(pathOptions);
 
@@ -189,6 +192,80 @@ namespace AoC_2019
             return solution.Moments.Count - 2;
         }
 
+        private static int AStarAlgorithm(List<LocationPoint> emptyLocations)
+        {
+            int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
+            var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
+            Path initialPath = new Path(new Moment(startPoint, new HashSet<string>(), new HashSet<string>()));
+
+            SimplePriorityQueue<Path, double> paths = new SimplePriorityQueue<Path, double>();
+            paths.Enqueue(initialPath, priority: keysToCollect);
+
+            Dictionary<Path, int> costFromStart = new Dictionary<Path, int>
+            {
+                [initialPath] = 0
+            };
+
+            HashSet<Path> pathsToExpand = new HashSet<Path>()
+            {
+                initialPath
+            };
+
+            int stepCounter = 0;
+            while (pathsToExpand.Any())
+            {
+                TrackProgress(keysToCollect, paths, ref stepCounter);
+
+                Path currentPath = paths.First(p => pathsToExpand.Contains(p));
+
+                pathsToExpand.Remove(currentPath);
+
+                Moment currentMoment = currentPath.Moments.Last();
+
+                if (currentMoment.Keys.Count == keysToCollect)
+                {
+                    int numberOfSteps = currentPath.Moments.Count - 2;
+
+                    Console.WriteLine($"{GetCurrentMethod()}: {numberOfSteps} in {stepCounter}");
+
+                    return numberOfSteps;
+                }
+
+                if (currentMoment.Point.ContentType == ContentType.Key)
+                {
+                    currentMoment.Keys.Add(currentMoment.Point.Content);
+                }
+
+                var nextPointCandidates = emptyLocations
+                    .Where(MovementCandidateCondition(currentMoment, currentPath))
+                    .ToList();
+
+                foreach (var candidate in nextPointCandidates)
+                {
+                    var pathIncludingCandidate = new Path(currentPath, new Moment(candidate, currentMoment.Keys, currentMoment.Doors));
+                    int newScoreForCandidate = costFromStart[currentPath] + 1;
+
+                    if (!costFromStart.TryGetValue(pathIncludingCandidate, out int cost) || newScoreForCandidate < cost)
+                    {
+                        costFromStart[pathIncludingCandidate] = newScoreForCandidate;
+
+                        var totalCost = costFromStart[currentPath] + EstimateCost(pathIncludingCandidate, keysToCollect);
+
+                        paths.AddOrUpdatePriority(pathIncludingCandidate, totalCost);
+
+                        pathsToExpand.Add(pathIncludingCandidate);
+                    }
+                }
+            }
+
+            throw new SolvingException($"{GetCurrentMethod()} wasn't able to find a solution");
+        }
+
+        private static int EstimateCost(Path pathIncludingCandidate, int keysToCollect)
+        {
+            return keysToCollect - pathIncludingCandidate.Moments.Last().Keys.Count;
+        }
+
         private static Func<LocationPoint, bool> MovementCandidateCondition(Moment currentMoment, Path currentPath)
         {
             return p =>
@@ -349,7 +426,7 @@ namespace AoC_2019
         #endregion
     }
 
-    public class Path
+    public class Path : IEquatable<Path>
     {
         public List<Moment> Moments { get; set; }
 
@@ -373,6 +450,72 @@ namespace AoC_2019
         {
             Moments = new List<Moment> { moment };
             Visited = false;
+        }
+
+        #region Equals override
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null)
+            {
+                return false;
+            }
+
+            if (!(obj is Path))
+            {
+                return false;
+            }
+
+            return Equals((Path)obj);
+        }
+
+        public bool Equals(Path other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            return Moments.SequenceEqual(other.Moments);
+        }
+
+        public static bool operator ==(Path path1, Path path2)
+        {
+            if (path1 is null)
+            {
+                return path2 is null;
+            }
+
+            return path1.Equals(path2);
+        }
+
+        public static bool operator !=(Path path1, Path path2)
+        {
+            if (path1 is null)
+            {
+                return path2 is object;
+            }
+
+            return !path1.Equals(path2);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Moments);
+        }
+
+        #endregion
+    }
+
+    public static class PriorityQueueExtensions
+    {
+        public static void AddOrUpdatePriority<TItem, TPriority>(this SimplePriorityQueue<TItem, TPriority> queue, TItem item, TPriority priority)
+            where TPriority : IComparable<TPriority>
+        {
+            if (!queue.TryUpdatePriority(item, priority))
+            {
+                queue.Enqueue(item, priority);
+            }
         }
     }
 }
