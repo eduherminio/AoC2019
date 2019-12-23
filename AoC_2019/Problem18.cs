@@ -16,13 +16,13 @@ namespace AoC_2019
             var input = ParseInput().ToList();
             var pathOptions = input.Where(p => p.ContentType != ContentType.Wall).ToList();
 
-            EvaluateAlgorithmPerformance(BreathFirstAlgorithmPureStoringPaths, pathOptions);
-            EvaluateAlgorithmPerformance(BreathFirstAlgorithmOptimizedStoringPaths, pathOptions);
-            EvaluateAlgorithmPerformance(BreathFirstAlgorithmOptimizedStoringNodes, pathOptions);
-            EvaluateAlgorithmPerformance(DepthFirstAlgorithmPureStoringPaths, pathOptions);
-            EvaluateAlgorithmPerformance(DepthFirstAlgorithmOptimizedStoringPaths, pathOptions);
-            EvaluateAlgorithmPerformance(DepthFirstAlgorithmOptimizedStoringNodes, pathOptions);
-            EvaluateAlgorithmPerformance(AStarAlgorithmStoringPaths, pathOptions);
+            //EvaluateAlgorithmPerformance(BreathFirstAlgorithmPureStoringPaths, pathOptions);
+            //EvaluateAlgorithmPerformance(BreathFirstAlgorithmOptimizedStoringPaths, pathOptions);
+            //EvaluateAlgorithmPerformance(BreathFirstAlgorithmOptimizedStoringNodes, pathOptions);
+            //EvaluateAlgorithmPerformance(DepthFirstAlgorithmPureStoringPaths, pathOptions);
+            //EvaluateAlgorithmPerformance(DepthFirstAlgorithmOptimizedStoringPaths, pathOptions);
+            //EvaluateAlgorithmPerformance(DepthFirstAlgorithmOptimizedStoringNodes, pathOptions);
+            //EvaluateAlgorithmPerformance(AStarAlgorithmStoringPaths, pathOptions);
             EvaluateAlgorithmPerformance(AStarAlgorithmStoringNodes, pathOptions);
 
             int result = BreathFirstAlgorithmOptimizedStoringNodes(pathOptions);
@@ -149,6 +149,8 @@ namespace AoC_2019
 
         private static int DepthFirstAlgorithmOptimizedStoringNodes(List<LocationPoint> emptyLocations)
         {
+            var contiguousPoints = GenerateContiguousPointsDictionary(emptyLocations);
+
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
 
@@ -183,7 +185,7 @@ namespace AoC_2019
                     currentMoment.Keys.Add(currentMoment.Point.Content);
                 }
 
-                var nextPointCandidates = emptyLocations
+                var nextPointCandidates = contiguousPoints[currentMoment.Point]
                     .Where(MovementCandidateCondition(currentMoment))
                     .ToList();
 
@@ -322,6 +324,8 @@ namespace AoC_2019
 
         private static int BreathFirstAlgorithmOptimizedStoringNodes(List<LocationPoint> emptyLocations)
         {
+            var contiguousPoints = GenerateContiguousPointsDictionary(emptyLocations);
+
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
 
@@ -356,7 +360,7 @@ namespace AoC_2019
                     currentMoment.Keys.Add(currentMoment.Point.Content);
                 }
 
-                var nextPointCandidates = emptyLocations
+                var nextPointCandidates = contiguousPoints[currentMoment.Point]
                     .Where(MovementCandidateCondition(currentMoment))
                     .ToList();
 
@@ -459,6 +463,8 @@ namespace AoC_2019
 
         private static int AStarAlgorithmStoringNodes(List<LocationPoint> emptyLocations)
         {
+            var contiguousPoints = GenerateContiguousPointsDictionary(emptyLocations);
+
             int keysToCollect = emptyLocations.Count(p => p.ContentType == ContentType.Key);
             var startPoint = emptyLocations.Single(p => p.ContentType == ContentType.StartPoint);
             Moment initialNode = new Moment(startPoint, new HashSet<string>(), new HashSet<string>());
@@ -479,7 +485,7 @@ namespace AoC_2019
             int stepCounter = 0;
             while (pathsToExpand.Any())
             {
-                Moment currentMoment = paths.First(p => pathsToExpand.Contains(p));
+                Moment currentMoment = paths.Dequeue();
 
                 TrackProgress(keysToCollect, currentMoment, ref stepCounter);
 
@@ -506,7 +512,7 @@ namespace AoC_2019
                     currentMoment.Keys.Add(currentMoment.Point.Content);
                 }
 
-                var nextPointCandidates = emptyLocations
+                var nextPointCandidates = contiguousPoints[currentMoment.Point]
                     .Where(MovementCandidateCondition(currentMoment))
                     .ToList();
 
@@ -529,6 +535,22 @@ namespace AoC_2019
             }
 
             throw new SolvingException($"{GetCurrentMethod()} wasn't able to find a solution");
+        }
+
+        private static Dictionary<LocationPoint, ICollection<LocationPoint>> GenerateContiguousPointsDictionary(List<LocationPoint> emptyLocations)
+        {
+            Dictionary<LocationPoint, ICollection<LocationPoint>> contiguousPoints = new Dictionary<LocationPoint, ICollection<LocationPoint>>();
+
+            foreach (var point in emptyLocations)
+            {
+                contiguousPoints.Add(point, new List<LocationPoint>(4));
+                foreach (var contiguousPoint in emptyLocations.Where(p => point.ManhattanDistance(p) == 1))
+                {
+                    contiguousPoints[point].Add(contiguousPoint);
+                }
+            }
+
+            return contiguousPoints;
         }
 
         private static int EstimateCost(Path pathIncludingCandidate, int keysToCollect)
@@ -559,8 +581,7 @@ namespace AoC_2019
         private static Func<LocationPoint, bool> MovementCandidateCondition(Moment currentMoment)
         {
             return p =>
-                currentMoment.Point.ManhattanDistance(p) == 1
-                && (p.ContentType != ContentType.Door || currentMoment.Keys.Contains(p.Content.ToLower()))
+            (p.ContentType != ContentType.Door || currentMoment.Keys.Contains(p.Content.ToLower()))
                 && (currentMoment.Parent?.Equals(new Moment(p, currentMoment.Keys, currentMoment.Doors)) != true);
         }
 
@@ -578,7 +599,7 @@ namespace AoC_2019
         private static void TrackProgress(int keysToCollect, Moment moment, ref int stepCounter)
         {
             ++stepCounter;
-            if (stepCounter % 100000 == 0)
+            if (stepCounter % 10000 == 0)
             {
                 Console.WriteLine($"{moment.Keys.Count}/{keysToCollect} at step {stepCounter}");
             }
