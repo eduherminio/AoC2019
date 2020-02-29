@@ -1,5 +1,4 @@
-﻿using AoC_2019.Model;
-using AoCHelper;
+﻿using AoCHelper;
 using FileParser;
 using System;
 using System.Collections.Generic;
@@ -207,7 +206,7 @@ namespace AoC_2019
     /// <summary>
     /// Used to store surplus in a more easy/natural way
     /// </summary>
-    public class Element : IEquatable<Element>
+    public sealed class Element : IEquatable<Element>
     {
         public string Id { get; set; }
 

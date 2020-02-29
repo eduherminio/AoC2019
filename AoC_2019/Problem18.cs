@@ -6,6 +6,7 @@ using System.Linq;
 using Priority_Queue;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using AoCHelper.Model;
 
 namespace AoC_2019
 {
@@ -13,6 +14,8 @@ namespace AoC_2019
     {
         public override string Solve_1()
         {
+            return "";
+
             var input = ParseInput().ToList();
             var pathOptions = input.Where(p => p.ContentType != ContentType.Wall).ToList();
 
@@ -32,8 +35,6 @@ namespace AoC_2019
 
         public override string Solve_2()
         {
-            var input = ParseInput();
-
             return "";
         }
 
@@ -696,7 +697,7 @@ namespace AoC_2019
         Door
     }
 
-    public class LocationPoint : Model.PointWithId
+    public class LocationPoint : Point
     {
         public char Content { get; }
 

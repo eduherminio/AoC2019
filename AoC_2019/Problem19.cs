@@ -1,7 +1,6 @@
 ﻿using System;
 using AoC_2019.IntCode;
-using AoC_2019.Model;
-using Point = AoCHelper.Model.Point;
+using AoCHelper.Model;
 using AoCHelper;
 using FileParser;
 using System.Collections.Generic;
@@ -39,13 +38,13 @@ namespace AoC_2019
             return result.ToString();
         }
 
-        private IEnumerable<PointWithId> ScanUniverse(int xMax, int yMax)
+        private IEnumerable<Point> ScanUniverse(int xMax, int yMax)
         {
             for (int y = 0; y < yMax; ++y)
             {
                 for (int x = 0; x < xMax; ++x)
                 {
-                    yield return new PointWithId(ScanPoint(x, y).Result.ToString(), x, y);
+                    yield return new Point(ScanPoint(x, y).Result.ToString(), x, y);
                 }
             }
         }
@@ -58,19 +57,19 @@ namespace AoC_2019
             inputChannel.Writer.TryWrite(x);
             inputChannel.Writer.TryWrite(y);
 
-            var output = await computer.RunIntCodeProgram(ParseInput().ToList()).ToListAsync();
+            var output = await computer.RunIntCodeProgram(ParseInput().ToList()).ToListAsync().ConfigureAwait(false);
 
             return output.Single();
         }
 
-        private static void PrintMap(HashSet<PointWithId> map)
+        private static void PrintMap(HashSet<Point> map)
         {
             StringBuilder sb = new StringBuilder();
             for (int y = 0; y < map.Max(p => p.Y); ++y)
             {
                 for (int x = 0; x < map.Max(p => p.X); ++x)
                 {
-                    if (map.TryGetValue(new PointWithId("", x, y), out var actualPoint))
+                    if (map.TryGetValue(new Point("", x, y), out var actualPoint))
                     {
                         sb.Append(actualPoint.Id);
                     }
@@ -134,7 +133,9 @@ namespace AoC_2019
 
                             return new Point(x, y - side);
                             error:
+#pragma warning disable S1116 // Empty statements should be removed
                             ;
+#pragma warning restore S1116 // Empty statements should be removed
                         }
                     }
                     else

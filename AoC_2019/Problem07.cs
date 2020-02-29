@@ -6,7 +6,7 @@ using System;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using AoC_2019.IntCode;
-using AoC_2019.Extensions;
+using AoCHelper.Extensions;
 
 namespace AoC_2019
 {
@@ -89,7 +89,7 @@ namespace AoC_2019
         /// <returns></returns>
         private static int CalculateNumberOfPermutations(List<int> phaseList)
         {
-            return IntHelpers.Factorial(phaseList.Count);
+            return phaseList.Count.Factorial();
         }
 
         private static async Task<ICollection<Amplifier>> SetupAmplifiers(int ampNumber, string permutation)

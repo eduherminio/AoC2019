@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using AoCHelper.Model;
 using System;
-using AoC_2019.Extensions;
 
 namespace AoC_2019
 {

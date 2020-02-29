@@ -1,11 +1,10 @@
-﻿using AoC_2019.Extensions;
-using AoC_2019.Model;
-using AoCHelper;
+﻿using AoCHelper;
+using AoCHelper.Extensions;
+using AoCHelper.Model;
 using FileParser;
 using MoreLinq.Extensions;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace AoC_2019
@@ -74,7 +73,7 @@ namespace AoC_2019
         /// <returns></returns>
         private static int CalculateNumberOfCombinations(int items, int combinationSize)
         {
-            return IntHelpers.Factorial(items) / (IntHelpers.Factorial(combinationSize) * IntHelpers.Factorial(items - combinationSize));
+            return items.Factorial() / (combinationSize.Factorial() * (items - combinationSize).Factorial());
         }
 
         private IEnumerable<Moon> ParseInput()
@@ -96,7 +95,7 @@ namespace AoC_2019
                 }
 
                 yield return new Moon(_moonNames[i],
-                    new Point(coordinates.ElementAt(0), coordinates.ElementAt(1), coordinates.ElementAt(2)));
+                    new Point3D(coordinates.ElementAt(0), coordinates.ElementAt(1), coordinates.ElementAt(2)));
             }
 
             if (!file.Empty)
@@ -110,9 +109,9 @@ namespace AoC_2019
     {
         public string Id { get; }
 
-        public Point Position { get; private set; }
+        public Point3D Position { get; private set; }
 
-        public Point Velocity { get; private set; }
+        public Point3D Velocity { get; private set; }
 
         public int PotentialEnergy => Math.Abs(Position.X) + Math.Abs(Position.Y) + Math.Abs(Position.Z);
 
@@ -120,11 +119,11 @@ namespace AoC_2019
 
         public long TotalEnergy => PotentialEnergy * KineticEnergy;
 
-        public Moon(string id, Point initialPosition)
+        public Moon(string id, Point3D initialPosition)
         {
             Id = id;
             Position = initialPosition;
-            Velocity = new Point(0, 0, 0);
+            Velocity = new Point3D(0, 0, 0);
         }
 
         public void ApplyGravity(Moon otherMoon)

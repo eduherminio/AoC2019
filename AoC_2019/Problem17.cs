@@ -1,6 +1,6 @@
 ﻿using AoC_2019.IntCode;
-using AoC_2019.Model;
 using AoCHelper;
+using AoCHelper.Model;
 using FileParser;
 using System;
 using System.Collections.Generic;
@@ -22,7 +22,7 @@ namespace AoC_2019
 
             var intCodeOutput = IntCodeHelpers.RunIntCodeProgram(intCode).Result;
 
-            ICollection<PointWithId> points = new List<PointWithId>();
+            ICollection<Point> points = new List<Point>();
 
             int x = 0, y = 0;
             foreach (long output in intCodeOutput)
@@ -36,7 +36,7 @@ namespace AoC_2019
                     continue;
                 }
 
-                points.Add(new PointWithId(ch, x, y));
+                points.Add(new Point(ch, x, y));
                 ++x;
             }
 

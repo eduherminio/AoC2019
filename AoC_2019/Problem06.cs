@@ -1,8 +1,8 @@
 ﻿using AoCHelper;
+using AoCHelper.Model;
 using FileParser;
 using System.Collections.Generic;
 using System.Linq;
-using AoC_2019.Model;
 
 namespace AoC_2019
 {
