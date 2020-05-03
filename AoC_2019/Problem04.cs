@@ -2,7 +2,7 @@
 using FileParser;
 using System.Collections.Generic;
 using System.Linq;
-using AoCHelper.Helpers;
+using SheepTools;
 
 namespace AoC_2019
 {
@@ -59,7 +59,7 @@ namespace AoC_2019
                         }
                         else if (left == right)
                         {
-                            ++weightedCandidate[weightedCandidate.Count - 1];
+                            ++weightedCandidate[^1];
                         }
                         else
                         {
@@ -95,7 +95,7 @@ namespace AoC_2019
                         }
                         else if (left == right)
                         {
-                            ++weightedCandidate[weightedCandidate.Count - 1];
+                            ++weightedCandidate[^1];
                         }
                         else
                         {

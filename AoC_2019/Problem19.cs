@@ -1,6 +1,6 @@
 ﻿using System;
 using AoC_2019.IntCode;
-using AoCHelper.Model;
+using SheepTools.Model;
 using AoCHelper;
 using FileParser;
 using System.Collections.Generic;
@@ -33,7 +33,7 @@ namespace AoC_2019
 
             var point = ScanSeekingSquare(squareSideSize);
 
-            long result = 10_000 * point.X + point.Y;
+            double result = 10_000 * point.X + point.Y;
 
             return result.ToString();
         }

@@ -2,7 +2,7 @@
 using FileParser;
 using System.Collections.Generic;
 using System.Linq;
-using AoCHelper.Model;
+using SheepTools.Model;
 using System;
 
 namespace AoC_2019
@@ -19,13 +19,13 @@ namespace AoC_2019
                     .Except(new[] { location })
                     .GroupBy(asteroid => new Line(location, asteroid));
 
-                var verticalLineGroup = lineGroups.SingleOrDefault(g => double.IsInfinity(g.Key.M));
+                var verticalLineGroups = lineGroups.Where(g => double.IsInfinity(g.Key.M));
 
                 return
                      lineGroups.Count(g => g.Any(p => p.X < location.X))
                      + lineGroups.Count(g => g.Any(p => p.X > location.X))
-                     + (verticalLineGroup?.Any(p => p.Y > location.Y) == true ? 1 : 0)
-                     + (verticalLineGroup?.Any(p => p.Y < location.Y) == true ? 1 : 0);
+                     + (verticalLineGroups?.Any(g => g.Any(p => p.Y > location.Y)) == true ? 1 : 0)
+                     + (verticalLineGroups?.Any(g => g.Any(p => p.Y < location.Y)) == true ? 1 : 0);
             });
 
             return maxNumberOfVisibleAsteroid.ToString();
@@ -54,14 +54,14 @@ namespace AoC_2019
                     .Except(new[] { location })
                     .GroupBy(asteroid => new Line(location, asteroid));
 
-                var verticalLineGroup = lineGroups.SingleOrDefault(g => double.IsInfinity(g.Key.M));
+                var verticalLineGroups = lineGroups.Where(g => double.IsInfinity(g.Key.M));
 
                 return
                      Tuple.Create(location,
                      lineGroups.Count(g => g.Any(p => p.X < location.X))
                      + lineGroups.Count(g => g.Any(p => p.X > location.X))
-                     + (verticalLineGroup?.Any(p => p.Y > location.Y) == true ? 1 : 0)
-                     + (verticalLineGroup?.Any(p => p.Y < location.Y) == true ? 1 : 0));
+                     + (verticalLineGroups?.Any(g => g.Any(p => p.Y > location.Y)) == true ? 1 : 0)
+                     + (verticalLineGroups?.Any(g => g.Any(p => p.Y < location.Y)) == true ? 1 : 0));
             });
 
             var tuple = locations
@@ -166,7 +166,7 @@ namespace AoC_2019
 
         private static double CalculateAlphaAngle(Point point, Point laserLocation)
         {
-            return Math.Atan(Math.Abs((double)(point.X - laserLocation.X) / (point.Y - laserLocation.Y)));
+            return Math.Atan(Math.Abs((point.X - laserLocation.X) / (point.Y - laserLocation.Y)));
         }
 
         private IEnumerable<Point> ParseInput()

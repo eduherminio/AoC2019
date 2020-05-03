@@ -1,14 +1,13 @@
 ﻿using AoC_2019.Arcade.Pieces;
 using AoC_2019.IntCode;
 using AoCHelper;
-using AoCHelper.Model;
+using SheepTools.Model;
 using EasyAsyncCancel;
 using MersenneTwister;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
@@ -520,7 +519,6 @@ namespace AoC_2019.Arcade
                     ConsoleKey.D => +1,
                     _ => 0
                 };
-
             }
             catch (OperationCanceledException)
             {
@@ -535,12 +533,12 @@ namespace AoC_2019.Arcade
 
             foreach (Piece piece in piecesToUpdate.Where(p => p != null))
             {
-                int position = width * (piece.Position.Y) + piece.Position.X;
+                var position = width * (piece.Position.Y) + piece.Position.X;
                 char content = piece.Render();
 
                 if (position >= 0 && position < gridBuilder.Length)
                 {
-                    gridBuilder[position] = content;
+                    gridBuilder[(int)position] = content;
                 }
                 else
                 {
@@ -555,11 +553,11 @@ namespace AoC_2019.Arcade
         {
             var pieces = ExtractPieces(intCode);
 
-            int minX = pieces.Min(p => p.Position.X);
-            int maxX = pieces.Max(p => p.Position.X);
+            var minX = pieces.Min(p => p.Position.X);
+            var maxX = pieces.Max(p => p.Position.X);
 
-            int minY = pieces.Min(p => p.Position.Y);
-            int maxY = pieces.Max(p => p.Position.Y);
+            var minY = pieces.Min(p => p.Position.Y);
+            var maxY = pieces.Max(p => p.Position.Y);
 
             if (minX < 0 || minY < 0)
             {
@@ -594,7 +592,7 @@ namespace AoC_2019.Arcade
             }
         }
 
-        private static Piece GeneratePiece(long x, long y, long id)
+        private static Piece GeneratePiece(double x, double y, long id)
         {
             if (_pieceTileId.TryGetValue((int)id, out var pieceFunc))
             {

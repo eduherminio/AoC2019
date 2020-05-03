@@ -6,7 +6,7 @@ using System.Linq;
 using Priority_Queue;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using AoCHelper.Model;
+using SheepTools.Model;
 
 namespace AoC_2019
 {
@@ -592,7 +592,7 @@ namespace AoC_2019
                 currentMoment.Point.ManhattanDistance(p) == 1
                 && (p.ContentType != ContentType.Door || currentMoment.Keys.Contains(Char.ToLower(p.Content)))
                 && (currentPath.Moments.Count < 2
-                    || !currentPath.Moments[currentPath.Moments.Count - 2].Equals(new Moment(p, currentMoment.Keys, currentMoment.Doors)));
+                    || !currentPath.Moments[^2].Equals(new Moment(p, currentMoment.Keys, currentMoment.Doors)));
         }
 
         private static Func<LocationPoint, bool> MovementCandidateCondition(Moment currentMoment)
@@ -631,7 +631,7 @@ namespace AoC_2019
 
             string elapsedTime = watch.ElapsedMilliseconds < 1000
                 ? $"{watch.ElapsedMilliseconds} ms"
-                : $"{(0.001 * watch.ElapsedMilliseconds).ToString("F")} s";
+                : $"{0.001 * watch.ElapsedMilliseconds:F} s";
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"{algorithm.Method.Name}: {elapsedTime}");

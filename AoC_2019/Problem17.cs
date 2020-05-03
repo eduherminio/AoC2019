@@ -1,6 +1,6 @@
 ﻿using AoC_2019.IntCode;
 using AoCHelper;
-using AoCHelper.Model;
+using SheepTools.Model;
 using FileParser;
 using System;
 using System.Collections.Generic;
@@ -45,9 +45,9 @@ namespace AoC_2019
                     && points.Count(otherP =>
                         p.ManhattanDistance(otherP) == 1 && otherP.Id == Scaffold) == 4);
 
-            static int CalculateAlignmentParameter(AoCHelper.Model.Point p) => p.X * p.Y;
+            static double CalculateAlignmentParameter(Point p) => p.X * p.Y;
 
-            int result = intersections
+            double result = intersections
                 .Sum(CalculateAlignmentParameter);
 
             return result.ToString();
@@ -62,7 +62,6 @@ namespace AoC_2019
             //}
 
             //intCode[0] = 2;
-
 
             return "";
         }

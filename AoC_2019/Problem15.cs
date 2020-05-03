@@ -7,7 +7,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using MersenneTwister;
 using System;
-using AoCHelper.Model;
+using SheepTools.Model;
 using System.Text;
 
 namespace AoC_2019
@@ -220,15 +220,15 @@ namespace AoC_2019
 
         private static void PrintMap(IDictionary<Point, Status> map)
         {
-            int minX = map.Keys.Min(p => p.X);
-            int minY = map.Keys.Min(p => p.Y);
-            int maxX = map.Keys.Max(p => p.X);
-            int maxY = map.Keys.Max(p => p.Y);
+            var minX = map.Keys.Min(p => p.X);
+            var minY = map.Keys.Min(p => p.Y);
+            var maxX = map.Keys.Max(p => p.X);
+            var maxY = map.Keys.Max(p => p.Y);
 
             StringBuilder sb = new StringBuilder();
-            for (int x = minX; x < maxX; ++x)
+            for (var x = minX; x < maxX; ++x)
             {
-                for (int y = minY; y < maxY; ++y)
+                for (var y = minY; y < maxY; ++y)
                 {
                     if (map.TryGetValue(new Point(x, y), out var status))
                     {

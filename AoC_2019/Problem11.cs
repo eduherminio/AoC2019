@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using AoC_2019.IntCode;
-using AoCHelper.Model;
+using SheepTools.Model;
 using System.Text;
 
 namespace AoC_2019
@@ -43,10 +43,10 @@ namespace AoC_2019
             var visitedPoints = await new Robot(initialColor).Run(input).ConfigureAwait(false);
 
             StringBuilder sb = new StringBuilder(Environment.NewLine);
-            for (int y = visitedPoints.Keys.Min(p => p.Y); y <= visitedPoints.Keys.Max(p => p.Y); ++y)
+            for (int y = (int)visitedPoints.Keys.Min(p => p.Y); y <= visitedPoints.Keys.Max(p => p.Y); ++y)
             {
                 sb.Append(Environment.NewLine);
-                for (int x = visitedPoints.Keys.Min(p => p.X); x <= visitedPoints.Keys.Max(p => p.X); ++x)
+                for (int x = (int)visitedPoints.Keys.Min(p => p.X); x <= visitedPoints.Keys.Max(p => p.X); ++x)
                 {
                     sb.Append(visitedPoints.TryGetValue(new Point(x, y), out Color color) && color == Color.White
                         ? "o"

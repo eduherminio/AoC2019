@@ -1,10 +1,10 @@
 ﻿using AoCHelper;
-using AoCHelper.Model;
+using SheepTools.Model;
 using FileParser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AoCHelper.Helpers;
+using SheepTools;
 
 namespace AoC_2019
 {
@@ -45,26 +45,26 @@ namespace AoC_2019
                     switch (c)
                     {
                         case 'U':
-                            RangeHelpers.GenerateRange(current.Y + 1, current.Y + dis).ToList()
-                                .ForEach(y => handlePoint(current.X, y, lineIndex));
+                            RangeHelpers.GenerateRange((int)current.Y + 1, (int)current.Y + dis).ToList()
+                                .ForEach(y => handlePoint((int)current.X, y, lineIndex));
                             current.Y += dis;
                             break;
 
                         case 'D':
-                            RangeHelpers.GenerateRange(current.Y - dis, current.Y - 1).ToList()
-                                .ForEach(y => handlePoint(current.X, y, lineIndex));
+                            RangeHelpers.GenerateRange((int)current.Y - dis, (int)current.Y - 1).ToList()
+                                .ForEach(y => handlePoint((int)current.X, y, lineIndex));
                             current.Y -= dis;
                             break;
 
                         case 'R':
-                            RangeHelpers.GenerateRange(current.X + 1, current.X + dis).ToList()
-                                .ForEach(x => handlePoint(x, current.Y, lineIndex));
+                            RangeHelpers.GenerateRange((int)current.X + 1, (int)current.X + dis).ToList()
+                                .ForEach(x => handlePoint(x, (int)current.Y, lineIndex));
                             current.X += dis;
                             break;
 
                         case 'L':
-                            RangeHelpers.GenerateRange(current.X - dis, current.X - 1).ToList()
-                                .ForEach(x => handlePoint(x, current.Y, lineIndex));
+                            RangeHelpers.GenerateRange((int)current.X - dis, (int)current.X - 1).ToList()
+                                .ForEach(x => handlePoint(x, (int)current.Y, lineIndex));
                             current.X -= dis;
                             break;
                     }
@@ -117,26 +117,26 @@ namespace AoC_2019
                     switch (c)
                     {
                         case 'U':
-                            RangeHelpers.GenerateRange(current.Y + 1, current.Y + dis).ToList()
-                                .ForEach(y => handlePoint(current.X, y, lineIndex, ref lineLength));
+                            RangeHelpers.GenerateRange((int)current.Y + 1, (int)current.Y + dis).ToList()
+                                .ForEach(y => handlePoint((int)current.X, y, lineIndex, ref lineLength));
                             current.Y += dis;
                             break;
 
                         case 'D':
-                            RangeHelpers.GenerateRange(current.Y - dis, current.Y - 1).ToList()
-                                .ForEach(y => handlePoint(current.X, y, lineIndex, ref lineLength));
+                            RangeHelpers.GenerateRange((int)current.Y - dis, (int)current.Y - 1).ToList()
+                                .ForEach(y => handlePoint((int)current.X, y, lineIndex, ref lineLength));
                             current.Y -= dis;
                             break;
 
                         case 'R':
-                            RangeHelpers.GenerateRange(current.X + 1, current.X + dis).ToList()
-                                .ForEach(x => handlePoint(x, current.Y, lineIndex, ref lineLength));
+                            RangeHelpers.GenerateRange((int)current.X + 1, (int)current.X + dis).ToList()
+                                .ForEach(x => handlePoint(x, (int)current.Y, lineIndex, ref lineLength));
                             current.X += dis;
                             break;
 
                         case 'L':
-                            RangeHelpers.GenerateRange(current.X - dis, current.X - 1).ToList()
-                                .ForEach(x => handlePoint(x, current.Y, lineIndex, ref lineLength));
+                            RangeHelpers.GenerateRange((int)current.X - dis, (int)current.X - 1).ToList()
+                                .ForEach(x => handlePoint(x, (int)current.Y, lineIndex, ref lineLength));
                             current.X -= dis;
                             break;
                     }

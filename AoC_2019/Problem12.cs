@@ -1,6 +1,6 @@
 ﻿using AoCHelper;
-using AoCHelper.Extensions;
-using AoCHelper.Model;
+using SheepTools.Extensions;
+using SheepTools.Model;
 using FileParser;
 using MoreLinq.Extensions;
 using System;
@@ -27,15 +27,13 @@ namespace AoC_2019
 
             SimulateMovement(moons, simulationTime);
 
-            long result = moons.Sum(moon => moon.TotalEnergy);
+            double result = moons.Sum(moon => moon.TotalEnergy);
 
             return result.ToString();
         }
 
         public override string Solve_2()
         {
-            var input = ParseInput().ToList();
-
             return "";
         }
 
@@ -83,7 +81,7 @@ namespace AoC_2019
             for (int i = 0; i < 4; ++i)
             {
                 var rawLine = file.NextLine().ToSingleString();
-                var enhancedLine = rawLine.Substring(1, rawLine.Length - 2).Replace(" ", string.Empty);
+                var enhancedLine = rawLine[1..^1].Replace(" ", string.Empty);
 
                 var coordinates = enhancedLine
                     .Split(",")
@@ -109,15 +107,15 @@ namespace AoC_2019
     {
         public string Id { get; }
 
-        public Point3D Position { get; private set; }
+        public Point3D Position { get; }
 
-        public Point3D Velocity { get; private set; }
+        public Point3D Velocity { get; }
 
-        public int PotentialEnergy => Math.Abs(Position.X) + Math.Abs(Position.Y) + Math.Abs(Position.Z);
+        public double PotentialEnergy => Math.Abs(Position.X) + Math.Abs(Position.Y) + Math.Abs(Position.Z);
 
-        public int KineticEnergy => Math.Abs(Velocity.X) + Math.Abs(Velocity.Y) + Math.Abs(Velocity.Z);
+        public double KineticEnergy => Math.Abs(Velocity.X) + Math.Abs(Velocity.Y) + Math.Abs(Velocity.Z);
 
-        public long TotalEnergy => PotentialEnergy * KineticEnergy;
+        public double TotalEnergy => PotentialEnergy * KineticEnergy;
 
         public Moon(string id, Point3D initialPosition)
         {

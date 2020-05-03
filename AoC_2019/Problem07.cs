@@ -6,7 +6,7 @@ using System;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using AoC_2019.IntCode;
-using AoCHelper.Extensions;
+using SheepTools.Extensions;
 
 namespace AoC_2019
 {

@@ -22,8 +22,7 @@ namespace AoC_2019
 
         public override string Solve_2()
         {
-            var intCode = ParseInput().ToList();
-
+            // var intCode = ParseInput().ToList();
             //ArcadeMachine arcadeMachine = new ArcadeMachine(intCode);
             //long score = arcadeMachine.PlayCheating().Result;
             //return score.ToString();

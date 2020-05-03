@@ -1,4 +1,4 @@
-﻿using AoCHelper.Model;
+﻿using SheepTools.Model;
 using System;
 
 namespace AoC_2019.Arcade.Pieces
@@ -9,9 +9,9 @@ namespace AoC_2019.Arcade.Pieces
 
         public Point Position { get; set; }
 
-        public void Init(long x, long y)
+        public void Init(double x, double y)
         {
-            Position = new Point((int)x, (int)y);
+            Position = new Point(x, y);
         }
 
         public abstract char Render();
