@@ -697,7 +697,7 @@ namespace AoC_2019
         Door
     }
 
-    public class LocationPoint : Point
+    public record LocationPoint : Point
     {
         public char Content { get; }
 
